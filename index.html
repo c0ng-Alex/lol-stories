@@ -6,6 +6,7 @@
     <title>英雄联盟 - 英雄故事大全</title>
     <script src="champions-data.js"></script>
     <script src="stories-data.js"></script>
+    <script src="relations-data.js"></script>
     <style>
         * {
             margin: 0;
@@ -1322,16 +1323,43 @@
         .relation-line {
             stroke-width: 1.5;
             fill: none;
-            opacity: 0.5;
+            opacity: 0.6;
+            transition: all 0.3s ease;
         }
 
         .relation-line.friend { stroke: #2ecc71; }
-        .relation-line.enemy { stroke: #e74c3c; }
-        .relation-line.family { stroke: #e67e22; }
+        .relation-line.enemy { stroke: #ff6644; }
+        .relation-line.family { stroke: #ff88cc; }
         .relation-line.mentor { stroke: #9b59b6; }
-        .relation-line.lover { stroke: #e91e63; }
+        .relation-line.lover { stroke: #ff6699; }
         .relation-line.ally { stroke: #3498db; }
         .relation-line.other { stroke: var(--gold); }
+        .relation-line.sworn_enemy { stroke: #ff4444; }
+        .relation-line.best_friend { stroke: #44ff88; }
+        .relation-line.complex { stroke: #cc88ff; }
+        .relation-line.rival { stroke: #ffaa44; }
+
+        .relation-voice-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+            animation: voicePulse 2s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes voicePulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
+            50% { transform: scale(1.1); box-shadow: 0 0 15px rgba(255, 215, 0, 0.9); }
+        }
 
         .relation-legend {
             display: flex;
@@ -1358,13 +1386,17 @@
             border-radius: 50%;
         }
 
-        .legend-dot.friend { background: #2ecc71; }
-        .legend-dot.enemy { background: #e74c3c; }
-        .legend-dot.family { background: #e67e22; }
-        .legend-dot.mentor { background: #9b59b6; }
-        .legend-dot.lover { background: #e91e63; }
-        .legend-dot.ally { background: #3498db; }
+        .legend-dot.friend { background: #88ffcc; }
+        .legend-dot.enemy { background: #ff6644; }
+        .legend-dot.family { background: #ff88cc; }
+        .legend-dot.mentor { background: #aa88ff; }
+        .legend-dot.lover { background: #ff6699; }
+        .legend-dot.ally { background: #66ccff; }
         .legend-dot.other { background: var(--gold); }
+        .legend-dot.sworn_enemy { background: #ff4444; }
+        .legend-dot.best_friend { background: #44ff88; }
+        .legend-dot.complex { background: #cc88ff; }
+        .legend-dot.rival { background: #ffaa44; }
 
         /* 滚动条 */
         .modal-content::-webkit-scrollbar {
@@ -1832,13 +1864,17 @@
                 <!-- 节点由JS生成 -->
             </div>
             <div class="relation-legend">
-                <div class="legend-item"><div class="legend-dot friend"></div>朋友/同伴</div>
-                <div class="legend-item"><div class="legend-dot enemy"></div>敌人/宿敌</div>
-                <div class="legend-item"><div class="legend-dot family"></div>家人/亲属</div>
-                <div class="legend-item"><div class="legend-dot mentor"></div>师徒/上下级</div>
-                <div class="legend-item"><div class="legend-dot lover"></div>恋人/爱慕</div>
-                <div class="legend-item"><div class="legend-dot ally"></div>盟友/同僚</div>
-                <div class="legend-item"><div class="legend-dot other"></div>其他关系</div>
+                <div class="legend-item"><div class="legend-dot best_friend"></div>🤝 挚友</div>
+                <div class="legend-item"><div class="legend-dot sworn_enemy"></div>⚔️ 宿敌</div>
+                <div class="legend-item"><div class="legend-dot family"></div>❤️ 家人</div>
+                <div class="legend-item"><div class="legend-dot lover"></div>💕 恋人</div>
+                <div class="legend-item"><div class="legend-dot complex"></div>🔀 复杂关系</div>
+                <div class="legend-item"><div class="legend-dot mentor"></div>📚 师徒</div>
+                <div class="legend-item"><div class="legend-dot rival"></div>🏆 竞争对手</div>
+                <div class="legend-item"><div class="legend-dot ally"></div>🛡️ 盟友</div>
+                <div class="legend-item"><div class="legend-dot friend"></div>😊 朋友</div>
+                <div class="legend-item"><div class="legend-dot enemy"></div>👊 敌人</div>
+                <div class="legend-item"><span style="font-size:14px;">🎙️</span> 特殊对白</div>
             </div>
         </div>
     </div>
@@ -2218,88 +2254,90 @@
 
         // ==================== 关系图功能 ====================
         
-        // 关系类型关键词映射
-        const relationKeywords = {
-            friend: ['朋友', '同伴', '好友', '挚友', '伙伴', '并肩', '结为', '好友'],
-            enemy: ['敌人', '宿敌', '仇敌', '敌对', '对手', '追捕', '杀死', '复仇', '击败'],
-            family: ['父亲', '母亲', '儿子', '女儿', '兄弟', '姐妹', '丈夫', '妻子', '家人', '亲属', '血脉', '兄妹', '姐弟', '父子', '母女'],
-            mentor: ['师父', '师傅', '导师', '弟子', '徒弟', '学徒', '门下', '上下级', '上司', '下属', '领袖', '跟随', '师从'],
-            lover: ['恋人', '爱慕', '心爱', '钟情', '情侣', '妻子', '丈夫', '结发']
-        };
-
-        // 从relations文本中提取关系和英雄名
-        function extractRelations(champion) {
-            if (!champion.relations) return [];
-            
-            const relationsText = champion.relations;
-            const foundRelations = [];
-            
-            // 遍历所有英雄名，查找在relations中出现的英雄
-            allChampions.forEach(c => {
-                if (c.name === champion.name) return;
-                
-                // 检查英雄名是否出现在关系文本中
-                if (relationsText.includes(c.name)) {
-                    // 判断关系类型
-                    let relationType = 'other';
-                    let relationDesc = '';
-                    
-                    // 在文本中找到包含该英雄名的句子片段
-                    const sentences = relationsText.split(/[；;。]/);
-                    for (const sent of sentences) {
-                        if (sent.includes(c.name)) {
-                            relationDesc = sent.trim();
-                            
-                            // 关键词匹配判断关系类型
-                            for (const [type, keywords] of Object.entries(relationKeywords)) {
-                                if (keywords.some(kw => sent.includes(kw))) {
-                                    relationType = type;
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    
-                    // 提取简短的关系描述
-                    let shortDesc = '';
-                    if (relationDesc) {
-                        // 尝试提取关系描述
-                        const patterns = [
-                            /(师父|师傅|导师|弟子|徒弟|父亲|母亲|儿子|女儿|兄弟|姐妹|丈夫|妻子|敌人|宿敌|朋友|同伴|盟友|同[门僚])/g
-                        ];
-                        const matches = relationDesc.match(patterns[0]);
-                        if (matches) {
-                            shortDesc = matches[0];
-                        }
-                    }
-                    
-                    foundRelations.push({
-                        champion: c,
-                        type: relationType,
-                        description: shortDesc || '相关'
-                    });
-                }
-            });
-            
-            // 如果自动提取的关系太少，添加同地区的英雄作为盟友
-            if (foundRelations.length < 3) {
-                const sameRegion = allChampions.filter(c => 
-                    c.region === champion.region && c.name !== champion.name
-                ).slice(0, 6);
-                
-                sameRegion.forEach(c => {
-                    if (!foundRelations.find(r => r.champion.name === c.name)) {
-                        foundRelations.push({
-                            champion: c,
-                            type: 'ally',
-                            description: '同地区'
-                        });
-                    }
-                });
+        // 从 relations-data.js 获取英雄关系
+        function getHeroRelations(championName) {
+            // 优先使用relations-data.js中的详细数据
+            if (window.HERO_RELATIONS && window.HERO_RELATIONS[championName]) {
+                const relData = window.HERO_RELATIONS[championName];
+                return relData.relations.map(r => {
+                    // 找到目标英雄对象
+                    const targetChamp = allChampions.find(c => c.name === r.target);
+                    if (!targetChamp) return null;
+                    return {
+                        champion: targetChamp,
+                        type: r.type,
+                        description: r.note || '',
+                        hasSpecialVoice: r.hasSpecialVoice || false
+                    };
+                }).filter(Boolean);
             }
             
-            return foundRelations.slice(0, 10); // 最多显示10个
+            // 降级：从stories-data.js的relations字段提取
+            const story = window.DETAILED_STORIES && window.DETAILED_STORIES[championName];
+            if (story && story.relations) {
+                return extractRelationsFromText(story.relations, championName);
+            }
+            
+            // 再降级：同地区英雄
+            const sameRegion = allChampions.filter(c => 
+                c.region === (story?.region || '德玛西亚') && c.name !== championName
+            ).slice(0, 6).map(c => ({
+                champion: c,
+                type: 'ally',
+                description: '同地区',
+                hasSpecialVoice: false
+            }));
+            
+            return sameRegion;
+        }
+
+        // 从文本中提取关系（降级方案）
+        function extractRelationsFromText(relationsText, championName) {
+            const relationKeywords = {
+                'best_friend': ['挚友', '生死之交', '最好的朋友'],
+                'sworn_enemy': ['宿敌', '死敌', '世仇', '不共戴天'],
+                'family': ['父亲', '母亲', '儿子', '女儿', '兄弟', '姐妹', '丈夫', '妻子', '家人', '亲属', '血脉', '兄妹', '姐弟', '父子', '母女', '亲姐妹', '亲兄弟'],
+                'lover': ['恋人', '爱慕', '心爱', '钟情', '情侣', '妻子', '丈夫', '结发', '夫妻', '暧昧'],
+                'mentor': ['师父', '师傅', '导师', '弟子', '徒弟', '学徒', '门下', '师从', '师兄', '师弟'],
+                'friend': ['朋友', '同伴', '好友', '伙伴', '并肩', '好友'],
+                'enemy': ['敌人', '仇敌', '敌对', '对手', '追捕', '杀死', '复仇', '击败'],
+                'complex': ['复杂', '亦敌亦友', '爱恨交织', '微妙'],
+                'rival': ['竞争', '对手', '挑战'],
+                'ally': ['盟友', '同僚', '战友', '同']
+            };
+            
+            const foundRelations = [];
+            
+            allChampions.forEach(c => {
+                if (c.name === championName) return;
+                if (!relationsText.includes(c.name)) return;
+                
+                let relationType = 'other';
+                let relationDesc = '';
+                
+                const sentences = relationsText.split(/[；;。\n]/);
+                for (const sent of sentences) {
+                    if (sent.includes(c.name)) {
+                        relationDesc = sent.trim().substring(0, 60);
+                        for (const [type, keywords] of Object.entries(relationKeywords)) {
+                            if (keywords.some(kw => sent.includes(kw))) {
+                                relationType = type;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                
+                foundRelations.push({
+                    champion: c,
+                    type: relationType,
+                    description: relationDesc || '相关',
+                    hasSpecialVoice: false
+                });
+            });
+            
+            return foundRelations.slice(0, 12);
         }
 
         // 打开关系图模态框
@@ -2318,7 +2356,7 @@
             // 等待下一帧确保容器有正确尺寸
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    const relations = extractRelations(champion);
+                    const relations = getHeroRelations(champion.name);
                     renderRelationGraph(champion, relations);
                 });
             });
@@ -2334,7 +2372,6 @@
             svg.innerHTML = '';
             
             const containerRect = container.getBoundingClientRect();
-            // 兜底尺寸，防止容器还没布局完成
             const width = containerRect.width || 600;
             const height = containerRect.height || 450;
             const centerX = width / 2;
@@ -2361,7 +2398,6 @@
             // 周围节点
             const count = relations.length;
             if (count === 0) {
-                // 没有关系的提示
                 const noRelation = document.createElement('div');
                 noRelation.className = 'relation-empty-tip';
                 noRelation.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text-secondary);text-align:center;margin-top:100px;';
@@ -2372,10 +2408,27 @@
             
             const radius = Math.min(width, height) * 0.35;
             
+            // 关系类型颜色和图标
+            const typeConfig = window.RELATION_TYPES || {
+                'sworn_enemy': { name: '宿敌', color: '#ff4444', icon: '⚔️' },
+                'best_friend': { name: '挚友', color: '#44ff88', icon: '🤝' },
+                'family': { name: '家人', color: '#ff88cc', icon: '❤️' },
+                'lover': { name: '恋人', color: '#ff6699', icon: '💕' },
+                'mentor': { name: '师徒', color: '#aa88ff', icon: '📚' },
+                'complex': { name: '复杂关系', color: '#cc88ff', icon: '🔀' },
+                'rival': { name: '竞争对手', color: '#ffaa44', icon: '🏆' },
+                'friend': { name: '朋友', color: '#88ffcc', icon: '😊' },
+                'enemy': { name: '敌人', color: '#ff6644', icon: '👊' },
+                'ally': { name: '盟友', color: '#66ccff', icon: '🛡️' },
+                'other': { name: '其他', color: '#c8aa6e', icon: '✨' }
+            };
+            
             relations.forEach((rel, index) => {
                 const angle = (index / count) * Math.PI * 2 - Math.PI / 2;
                 const x = centerX + Math.cos(angle) * radius;
                 const y = centerY + Math.sin(angle) * radius;
+                
+                const config = typeConfig[rel.type] || typeConfig['other'];
                 
                 // 连线
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -2384,42 +2437,43 @@
                 line.setAttribute('x2', x);
                 line.setAttribute('y2', y);
                 line.setAttribute('class', `relation-line ${rel.type}`);
+                line.style.stroke = config.color;
+                line.style.strokeWidth = rel.type === 'sworn_enemy' || rel.type === 'best_friend' || rel.type === 'lover' || rel.type === 'family' ? '3' : '2';
+                if (rel.type === 'complex') {
+                    line.style.strokeDasharray = '8,4';
+                }
                 svg.appendChild(line);
                 
                 // 节点
                 const node = document.createElement('div');
                 node.className = 'relation-node';
-                node.style.left = (x - 30) + 'px';
-                node.style.top = (y - 40) + 'px';
+                node.style.left = (x - 40) + 'px';
+                node.style.top = (y - 48) + 'px';
                 
                 const relAvatarUrl = getChampionAvatar(rel.champion.alias);
-                const typeColors = {
-                    friend: '#2ecc71',
-                    enemy: '#e74c3c',
-                    family: '#e67e22',
-                    mentor: '#9b59b6',
-                    lover: '#e91e63',
-                    ally: '#3498db',
-                    other: 'var(--gold)'
-                };
                 
                 node.innerHTML = `
-                    <div class="relation-node-avatar" style="border-color: ${typeColors[rel.type] || 'var(--gold)'}">
+                    <div class="relation-node-avatar" style="border-color: ${config.color}; box-shadow: 0 0 12px ${config.color}40;">
                         <img src="${relAvatarUrl}" alt="${rel.champion.name}" 
                              onerror="this.parentElement.innerHTML='<div class=avatar-placeholder style=font-size:1.5rem>${rel.champion.name.charAt(0)}</div>'">
+                        ${rel.hasSpecialVoice ? '<div class="relation-voice-badge" title="游戏中有特殊对白/彩蛋">🎙️</div>' : ''}
                     </div>
                     <div class="relation-node-name">${rel.champion.name}</div>
-                    <div class="relation-node-relation" style="color: ${typeColors[rel.type] || 'var(--gold)'}">${rel.description}</div>
+                    <div class="relation-node-relation" style="color: ${config.color}">
+                        ${config.icon} ${config.name}
+                    </div>
                 `;
                 
                 node.addEventListener('click', () => {
-                    // 点击切换到该英雄的关系图
                     openRelationModal(rel.champion);
-                    // 同时更新详情模态框
                     currentChampion = rel.champion;
                 });
                 
-                node.title = `点击查看${rel.champion.name}的关系图`;
+                // 显示关系备注
+                if (rel.description) {
+                    node.title = rel.description;
+                }
+                
                 container.appendChild(node);
             });
         }
