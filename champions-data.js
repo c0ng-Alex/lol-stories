@@ -248,9 +248,9 @@ const CHAMPIONS = [
   { name: "易", title: "无极剑圣", alias: "MasterYi", region: "艾欧尼亚", roles: ["刺客","战士"],
     lore: "艾欧尼亚无极派的最后剑圣，背负着复兴门派的使命，剑法快如闪电。",
     color: "#2e8b57" },
-  { name: "梅尔", title: "炼金男爵", alias: "Milio", region: "诺克萨斯", roles: ["辅助"],
-    lore: "来自以绪塔尔的少年，拥有治愈火焰的力量，温暖而善良的灵魂。",
-    color: "#ffa500" },
+  { name: "梅尔", title: "议会议员", alias: "Mel", region: "皮尔特沃夫", roles: ["辅助", "法师"],
+    lore: "来自诺克萨斯的梅达德家族，皮城议会的重要议员，优雅而富有远见的政治家，在双城之战中扮演关键角色。",
+    color: "#daa520" },
   { name: "米利欧", title: "明烛", alias: "Milio", region: "以绪塔尔", roles: ["辅助"],
     lore: "来自以绪塔尔的少年，拥有治愈之火的天赋，用温暖的火焰守护家人和朋友。",
     color: "#ffd700" },
@@ -332,7 +332,7 @@ const CHAMPIONS = [
   { name: "芮尔", title: "镕铁少女", alias: "Rell", region: "诺克萨斯", roles: ["坦克","战士"],
     lore: "诺克萨斯的实验产物，能够操控金属的少女，从囚禁中逃脱后誓要复仇。",
     color: "#696969" },
-  { name: "烈娜塔·戈拉斯克", title: "炼金男爵", alias: "RenataGlasc", region: "祖安", roles: ["辅助","法师"],
+  { name: "烈娜塔·戈拉斯克", title: "炼金男爵", alias: "Renata", region: "祖安", roles: ["辅助","法师"],
     lore: "祖安的炼金男爵，戈拉斯克化学公司的主人，用化学和阴谋掌控着地下世界。",
     color: "#8b008b" },
   { name: "雷克顿", title: "荒漠屠夫", alias: "Renekton", region: "恕瑞玛", roles: ["战士","坦克"],
@@ -526,7 +526,15 @@ const CHAMPIONS = [
     color: "#228b22" }
 ];
 
+// 自定义头像映射（没有官方头像的英雄用本地图片）
+const CUSTOM_AVATARS = {
+  'Norra': 'avatars/Norra.jpg',  // 诺拉 - 手游专属英雄
+};
+
 function getChampionAvatar(alias) {
+  if (CUSTOM_AVATARS[alias]) {
+    return CUSTOM_AVATARS[alias];
+  }
   return `https://game.gtimg.cn/images/lol/act/img/champion/${alias}.png`;
 }
 
