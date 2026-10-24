@@ -8,6 +8,7 @@
     <script src="stories-data.js"></script>
     <script src="relations-data.js"></script>
     <script src="backgrounds-data.js"></script>
+    <script src="voices-data.js?v=2"></script>
     <style>
         * {
             margin: 0;
@@ -529,6 +530,238 @@
             text-align: center;
         }
 
+        /* 语音播放器 */
+        .voice-player {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 360px;
+            background: linear-gradient(145deg, rgba(13, 25, 50, 0.98), rgba(8, 15, 30, 0.98));
+            border: 1px solid var(--border-gold);
+            border-radius: 14px;
+            padding: 18px 20px;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(200, 170, 110, 0.15);
+            transform: translateY(calc(100% + 50px));
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(20px);
+        }
+
+        .voice-player.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .voice-player-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(200, 170, 110, 0.2);
+        }
+
+        .voice-player-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 12px rgba(200, 170, 110, 0.4);
+            flex-shrink: 0;
+        }
+
+        .voice-player-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .voice-player-name {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--gold-light);
+            margin-bottom: 2px;
+        }
+
+        .voice-player-type {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .voice-player-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .voice-player-close:hover {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff6666;
+        }
+
+        .voice-line-text {
+            background: rgba(200, 170, 110, 0.08);
+            border: 1px solid rgba(200, 170, 110, 0.2);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .voice-line-text p {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            font-style: italic;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .voice-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .voice-control-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(200, 170, 110, 0.1);
+            border: 1px solid rgba(200, 170, 110, 0.3);
+            color: var(--gold-light);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .voice-control-btn:hover {
+            background: rgba(200, 170, 110, 0.2);
+            border-color: var(--gold);
+            transform: scale(1.08);
+        }
+
+        .voice-control-btn.play-btn {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(145deg, rgba(200, 170, 110, 0.3), rgba(200, 170, 110, 0.1));
+            border: 2px solid var(--gold);
+            font-size: 20px;
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.3);
+        }
+
+        .voice-control-btn.play-btn:hover {
+            box-shadow: 0 0 25px rgba(200, 170, 110, 0.5);
+        }
+
+        .voice-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(200, 170, 110, 0.15);
+            border-radius: 2px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voice-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .voice-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .voice-index {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .voice-shuffle-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .voice-shuffle-btn:hover {
+            color: var(--gold-light);
+            background: rgba(200, 170, 110, 0.1);
+        }
+
+        .voice-shuffle-btn.active {
+            color: var(--gold);
+        }
+
+        .voice-hint {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(200, 170, 110, 0.9);
+            color: #1a1a1a;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .voice-hint::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid rgba(200, 170, 110, 0.9);
+        }
+
+        .champion-card:hover .voice-hint {
+            opacity: 1;
+        }
+
         .logo-container {
             display: flex;
             align-items: center;
@@ -991,6 +1224,79 @@
             background: rgba(200, 170, 110, 0.15);
         }
 
+        .voice-icon-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            background: rgba(10, 20, 40, 0.9);
+            border: 1.5px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            z-index: 3;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+            animation: voiceBadgePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes voiceBadgePulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(200, 170, 110, 0.5); }
+            50% { box-shadow: 0 0 12px rgba(200, 170, 110, 0.8); }
+        }
+
+        .champion-card:hover .voice-icon-badge {
+            opacity: 1;
+            transform: scale(1.15);
+        }
+
+        .champion-avatar[data-voice="1"] {
+            cursor: pointer;
+        }
+
+        .champion-avatar[data-voice="1"]::after {
+            content: '点击播放语音';
+            position: absolute;
+            top: -32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background: rgba(200, 170, 110, 0.95);
+            color: #1a1a1a;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            opacity: 0;
+            transition: all 0.25s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .champion-avatar[data-voice="1"]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid rgba(200, 170, 110, 0.95);
+            opacity: 0;
+            transition: all 0.25s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .champion-avatar[data-voice="1"]:hover::after,
+        .champion-avatar[data-voice="1"]:hover::before {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
         .champion-info {
             padding: 12px 10px;
             text-align: center;
@@ -1302,6 +1608,129 @@
             gap: 8px;
             flex-wrap: wrap;
             margin-top: 10px;
+        }
+
+        /* 内嵌式语音播放器 */
+        .modal-voice-player {
+            margin-top: 16px;
+            padding: 16px;
+            background: linear-gradient(145deg, rgba(200, 170, 110, 0.08), rgba(200, 170, 110, 0.03));
+            border: 1px solid rgba(200, 170, 110, 0.25);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .modal-voice-player.active {
+            display: block;
+        }
+
+        .mvp-line-text {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(200, 170, 110, 0.15);
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            text-align: center;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mvp-line-text p {
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            font-style: italic;
+        }
+
+        .mvp-progress {
+            height: 4px;
+            background: rgba(200, 170, 110, 0.15);
+            border-radius: 2px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .mvp-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--gold-light));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .mvp-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mvp-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(200, 170, 110, 0.1);
+            border: 1px solid rgba(200, 170, 110, 0.3);
+            color: var(--gold-light);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .mvp-btn:hover {
+            background: rgba(200, 170, 110, 0.2);
+            border-color: var(--gold);
+        }
+
+        .mvp-btn.mvp-play-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 16px;
+            background: linear-gradient(145deg, var(--gold), var(--gold-dark));
+            color: #fff;
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.4);
+        }
+
+        .mvp-btn.mvp-play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(200, 170, 110, 0.6);
+        }
+
+        .mvp-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .mvp-shuffle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .mvp-shuffle:hover {
+            color: var(--gold);
+            background: rgba(200, 170, 110, 0.1);
+        }
+
+        .mvp-shuffle.active {
+            color: var(--gold);
         }
 
         .tag {
@@ -1939,6 +2368,9 @@
             <button class="nav-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
                 <span>🏠</span><span>首页</span>
             </button>
+            <button class="nav-btn" onclick="location.href='map.html'">
+                <span>🗺️</span><span>势力地图</span>
+            </button>
             <button class="nav-btn" id="navRelationBtn">
                 <span>🕸️</span><span>关系图</span>
             </button>
@@ -2073,6 +2505,27 @@
                     <span class="modal-region" id="modalRegion"></span>
                 </div>
                 <div class="modal-tags" id="modalTags"></div>
+                
+                <!-- 语音播放器（内嵌式） -->
+                <div class="modal-voice-player" id="voicePlayer">
+                    <div class="mvp-line-text">
+                        <p id="voiceLineText">点击播放英雄语音</p>
+                    </div>
+                    <div class="mvp-progress" onclick="seekVoice(event)">
+                        <div class="mvp-progress-bar" id="voiceProgressBar"></div>
+                    </div>
+                    <div class="mvp-controls">
+                        <button class="mvp-btn" onclick="prevVoice()" title="上一条">⏮</button>
+                        <button class="mvp-btn mvp-play-btn" id="voicePlayBtn" onclick="toggleVoicePlay()" title="播放/暂停">▶</button>
+                        <button class="mvp-btn" onclick="nextVoice()" title="下一条">⏭</button>
+                    </div>
+                    <div class="mvp-footer">
+                        <span class="mvp-index" id="voiceIndex">0 / 0</span>
+                        <button class="mvp-shuffle" id="voiceShuffleBtn" onclick="toggleShuffle()" title="随机播放">
+                            🔀 随机
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="modal-body">
                 <div class="section-title">性格特征</div>
@@ -2395,6 +2848,7 @@
                 card.className = 'champion-card';
                 
                 const avatarUrl = getChampionAvatar(champion.alias);
+                const hasVoices = window.HERO_VOICES && window.HERO_VOICES[champion.name];
                 
                 card.innerHTML = `
                     <div class="champion-avatar">
@@ -2402,6 +2856,7 @@
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div class="avatar-placeholder" style="display:none;">${champion.name.charAt(0)}</div>
                         <span class="region-badge">${champion.region}</span>
+                        ${hasVoices ? '<div class="voice-icon-badge">🔊</div>' : ''}
                     </div>
                     <div class="champion-info">
                         <div class="champion-name">${champion.name}</div>
@@ -2489,14 +2944,34 @@
             // 关系
             modalRelations.textContent = champion.relations || '暂无相关资料';
             
+            // 语音播放器
+            const voicePlayer = document.getElementById('voicePlayer');
+            const hasVoices = window.HERO_VOICES && window.HERO_VOICES[champion.name];
+            if (voicePlayer) {
+                if (hasVoices) {
+                    voicePlayer.classList.add('active');
+                } else {
+                    voicePlayer.classList.remove('active');
+                }
+            }
+            
             modalOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // 有语音则自动播放
+            if (hasVoices) {
+                setTimeout(() => openVoicePlayer(champion.name), 300);
+            }
         }
 
         // 关闭详情模态框
         function closeModal() {
             modalOverlay.classList.remove('active');
             document.body.style.overflow = '';
+            // 同步关闭语音播放器
+            if (typeof closeVoicePlayer === 'function') {
+                closeVoicePlayer();
+            }
         }
 
         // ==================== 背景切换器功能 ====================
@@ -2868,6 +3343,188 @@
             }, 200);
         });
 
+        // ==================== 语音播放器 ====================
+        let currentHeroVoices = null;
+        let currentVoiceIndex = 0;
+        let isShuffle = false;
+        let voiceTimer = null;
+        let voiceProgressInterval = null;
+        let voicePlaying = false;
+        let voiceDuration = 3000; // 模拟每条语音3秒
+        let voiceCurrentTime = 0;
+
+        // 打开语音播放器
+        function openVoicePlayer(championName) {
+            const voices = getHeroVoices(championName);
+            if (!voices) {
+                return;
+            }
+
+            currentHeroVoices = voices;
+            currentVoiceIndex = 0;
+
+            // 播放第一条
+            playVoice(0);
+        }
+
+        // 播放指定索引的语音
+        function playVoice(index) {
+            if (!currentHeroVoices) return;
+            
+            currentVoiceIndex = index;
+            const line = currentHeroVoices.lines[index];
+            
+            // 更新显示
+            document.getElementById('voiceLineText').innerHTML = `<p>"${line.text}"</p>`;
+            document.getElementById('voiceIndex').textContent = `${index + 1} / ${currentHeroVoices.lines.length}`;
+            
+            // 重置进度条
+            voiceCurrentTime = 0;
+            document.getElementById('voiceProgressBar').style.width = '0%';
+            
+            // 模拟播放（用定时器模拟进度）
+            voicePlaying = true;
+            document.getElementById('voicePlayBtn').textContent = '⏸';
+            
+            // 根据台词长度估算播放时间（每字200ms）
+            voiceDuration = Math.max(2000, line.text.length * 200);
+            
+            // 清除之前的定时器
+            if (voiceProgressInterval) clearInterval(voiceProgressInterval);
+            if (voiceTimer) clearTimeout(voiceTimer);
+            
+            // 进度条动画
+            const step = 50;
+            voiceProgressInterval = setInterval(() => {
+                voiceCurrentTime += step;
+                const progress = (voiceCurrentTime / voiceDuration) * 100;
+                document.getElementById('voiceProgressBar').style.width = Math.min(progress, 100) + '%';
+            }, step);
+            
+            // 播放结束自动下一条
+            voiceTimer = setTimeout(() => {
+                if (voicePlaying) {
+                    nextVoice();
+                }
+            }, voiceDuration);
+        }
+
+        // 播放/暂停
+        function toggleVoicePlay() {
+            if (!currentHeroVoices) return;
+            
+            if (voicePlaying) {
+                // 暂停
+                voicePlaying = false;
+                document.getElementById('voicePlayBtn').textContent = '▶';
+                if (voiceProgressInterval) clearInterval(voiceProgressInterval);
+                if (voiceTimer) clearTimeout(voiceTimer);
+            } else {
+                // 继续播放
+                voicePlaying = true;
+                document.getElementById('voicePlayBtn').textContent = '⏸';
+                
+                const remainingTime = voiceDuration - voiceCurrentTime;
+                const step = 50;
+                
+                voiceProgressInterval = setInterval(() => {
+                    voiceCurrentTime += step;
+                    const progress = (voiceCurrentTime / voiceDuration) * 100;
+                    document.getElementById('voiceProgressBar').style.width = Math.min(progress, 100) + '%';
+                }, step);
+                
+                voiceTimer = setTimeout(() => {
+                    if (voicePlaying) {
+                        nextVoice();
+                    }
+                }, remainingTime);
+            }
+        }
+
+        // 上一条
+        function prevVoice() {
+            if (!currentHeroVoices) return;
+            
+            let newIndex;
+            if (isShuffle) {
+                newIndex = Math.floor(Math.random() * currentHeroVoices.lines.length);
+            } else {
+                newIndex = currentVoiceIndex - 1;
+                if (newIndex < 0) newIndex = currentHeroVoices.lines.length - 1;
+            }
+            playVoice(newIndex);
+        }
+
+        // 下一条
+        function nextVoice() {
+            if (!currentHeroVoices) return;
+            
+            let newIndex;
+            if (isShuffle) {
+                newIndex = Math.floor(Math.random() * currentHeroVoices.lines.length);
+            } else {
+                newIndex = currentVoiceIndex + 1;
+                if (newIndex >= currentHeroVoices.lines.length) newIndex = 0;
+            }
+            playVoice(newIndex);
+        }
+
+        // 进度条点击跳转
+        function seekVoice(event) {
+            if (!currentHeroVoices) return;
+            
+            const progressBar = event.currentTarget;
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (event.clientX - rect.left) / rect.width;
+            
+            voiceCurrentTime = percent * voiceDuration;
+            document.getElementById('voiceProgressBar').style.width = (percent * 100) + '%';
+            
+            // 如果正在播放，重置定时器
+            if (voicePlaying) {
+                if (voiceProgressInterval) clearInterval(voiceProgressInterval);
+                if (voiceTimer) clearTimeout(voiceTimer);
+                
+                const remainingTime = voiceDuration - voiceCurrentTime;
+                const step = 50;
+                
+                voiceProgressInterval = setInterval(() => {
+                    voiceCurrentTime += step;
+                    const progress = (voiceCurrentTime / voiceDuration) * 100;
+                    document.getElementById('voiceProgressBar').style.width = Math.min(progress, 100) + '%';
+                }, step);
+                
+                voiceTimer = setTimeout(() => {
+                    if (voicePlaying) {
+                        nextVoice();
+                    }
+                }, remainingTime);
+            }
+        }
+
+        // 切换随机播放
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            const btn = document.getElementById('voiceShuffleBtn');
+            if (isShuffle) {
+                btn.classList.add('active');
+                btn.innerHTML = '🔀 随机中';
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '🔀 随机';
+            }
+        }
+
+        // 关闭语音播放器（停止播放）
+        function closeVoicePlayer() {
+            voicePlaying = false;
+            if (voiceProgressInterval) clearInterval(voiceProgressInterval);
+            if (voiceTimer) clearTimeout(voiceTimer);
+            // 重置播放按钮
+            const playBtn = document.getElementById('voicePlayBtn');
+            if (playBtn) playBtn.textContent = '▶';
+        }
+
         // 启动
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
@@ -2924,5 +3581,6 @@
         </div>
     </div>
 
+    <!-- 语音播放器 -->
 </body>
 </html>

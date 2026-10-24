@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>符文之地地图 - 英雄联盟势力分布</title>
+    <script src="champions-data.js"></script>
+    <script src="stories-data.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #c8aa6e;
+            --gold-light: #f0e6d2;
+            --gold-dark: #a8884e;
+            --gold-darker: #7a6438;
+            --blue-dark: #0a1428;
+            --blue-mid: #0d1f3c;
+            --blue-light: #0397ab;
+            --blue-accent: #1e8fc6;
+            --border-gold: rgba(200, 170, 110, 0.3);
+            --border-gold-strong: rgba(200, 170, 110, 0.5);
+            --text-primary: #f0e6d2;
+            --text-secondary: #a09b8c;
+            --text-muted: #6b6a5e;
+            --shadow-gold: 0 0 30px rgba(200, 170, 110, 0.2);
+            --shadow-gold-strong: 0 0 40px rgba(200, 170, 110, 0.4);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'SimHei', sans-serif;
+            background-color: var(--blue-dark);
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        /* 顶部导航栏 */
+        .map-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(180deg, rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.7));
+            border-bottom: 1px solid var(--border-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .map-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--gold-light);
+            text-shadow: 0 0 20px rgba(200, 170, 110, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .map-title span {
+            color: var(--gold);
+            font-size: 14px;
+            margin-left: 12px;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+
+        .back-btn {
+            padding: 8px 20px;
+            background: linear-gradient(145deg, rgba(200, 170, 110, 0.15), rgba(200, 170, 110, 0.05));
+            border: 1px solid var(--border-gold-strong);
+            border-radius: 6px;
+            color: var(--gold-light);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(145deg, rgba(200, 170, 110, 0.25), rgba(200, 170, 110, 0.1));
+            box-shadow: var(--shadow-gold);
+            transform: translateX(-2px);
+        }
+
+        /* 地图容器 */
+        .map-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, #1a2540 0%, #0a1428 70%, #050a14 100%);
+            padding: 20px;
+        }
+
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 95vw;
+            max-height: 85vh;
+            aspect-ratio: 2560 / 1440;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .world-map {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 60px rgba(200, 170, 110, 0.15));
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* SVG关系连线层 */
+        .relation-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .relation-line {
+            transition: opacity 0.5s ease;
+        }
+
+        .relation-line text {
+            dominant-baseline: middle;
+        }
+
+        /* 视图切换按钮组 */
+        .view-toggle {
+            position: fixed;
+            top: 80px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 40;
+        }
+
+        .toggle-btn {
+            padding: 10px 16px;
+            background: linear-gradient(145deg, rgba(13, 31, 60, 0.95), rgba(10, 20, 40, 0.95));
+            border: 1px solid var(--border-gold-strong);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 130px;
+            backdrop-filter: blur(10px);
+        }
+
+        .toggle-btn:hover {
+            color: var(--gold-light);
+            border-color: var(--gold);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .toggle-btn.active {
+            color: var(--gold-light);
+            background: linear-gradient(145deg, rgba(200, 170, 110, 0.2), rgba(200, 170, 110, 0.05));
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.3);
+        }
+
+        .toggle-btn-icon {
+            font-size: 16px;
+        }
+
+        /* 关系图例 */
+        .relation-legend {
+            position: fixed;
+            left: 30px;
+            top: 80px;
+            background: rgba(10, 20, 40, 0.9);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            padding: 12px 16px;
+            z-index: 40;
+            backdrop-filter: blur(10px);
+        }
+
+        .relation-legend h4 {
+            font-size: 13px;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .rel-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .rel-legend-line {
+            width: 24px;
+            height: 0;
+            border-top-width: 2px;
+            border-top-style: solid;
+        }
+
+        .rel-legend-line.enemy {
+            border-color: #ff4444;
+            border-top-style: dashed;
+        }
+
+        .rel-legend-line.ally {
+            border-color: #44aaff;
+            border-top-style: solid;
+        }
+
+        .rel-legend-line.friendly {
+            border-color: #44ff88;
+            border-top-style: solid;
+        }
+
+        .rel-legend-line.neutral {
+            border-color: #888888;
+            border-top-style: dashed;
+        }
+
+        /* 地区热点标记 - 横向布局 */
+        .region-marker {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .region-marker:hover {
+            transform: translate(-50%, -50%) scale(1.08);
+            z-index: 20;
+        }
+
+        .marker-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 18px currentColor;
+            animation: iconPulse 2s ease-in-out infinite;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            background: currentColor;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .marker-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0.3;
+            animation: iconRipple 2s ease-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { box-shadow: 0 0 12px currentColor, 0 0 24px currentColor; }
+            50% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+        }
+
+        @keyframes iconRipple {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+        }
+
+        .marker-name {
+            padding: 5px 14px;
+            background: linear-gradient(135deg, rgba(15, 25, 50, 0.95), rgba(8, 15, 35, 0.95));
+            border: 1px solid var(--border-gold-strong);
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--gold-light);
+            white-space: nowrap;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 10px rgba(200, 170, 110, 0.3);
+            position: relative;
+            letter-spacing: 1px;
+        }
+
+        .marker-name::before {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: var(--gold);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--gold);
+        }
+
+        /* 地区颜色 */
+        .region-demacia { color: #ffd700; }
+        .region-noxus { color: #ff4444; }
+        .region-iona { color: #44ff88; }
+        .region-piltover { color: #66ccff; }
+        .region-freljord { color: #aaddff; }
+        .region-shurima { color: #ffcc66; }
+        .region-shadowisles { color: #aa66ff; }
+        .region-bilgewater { color: #66ddcc; }
+        .region-targon { color: #ffffff; }
+        .region-void { color: #cc44ff; }
+        .region-zaun { color: #99ff44; }
+
+        /* 关系图视图 */
+        .relation-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, #152238 0%, #0a1428 60%, #050a14 100%);
+            z-index: 15;
+        }
+
+        .relation-view.active {
+            display: flex;
+        }
+
+        .relation-graph-container {
+            position: relative;
+            width: 90%;
+            height: 80%;
+            max-width: 1100px;
+        }
+
+        .relation-graph-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 关系图节点 */
+        .graph-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .graph-node circle {
+            stroke-width: 3;
+            filter: drop-shadow(0 0 10px currentColor);
+            transition: all 0.3s ease;
+        }
+
+        .graph-node:hover circle {
+            stroke-width: 5;
+            filter: drop-shadow(0 0 25px currentColor);
+        }
+
+        .graph-node text {
+            font-size: 13px;
+            font-weight: bold;
+            fill: var(--gold-light);
+            text-anchor: middle;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(200, 170, 110, 0.3);
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .graph-node:hover text {
+            font-size: 15px;
+        }
+
+        .graph-node .node-icon {
+            font-size: 24px;
+            text-anchor: middle;
+            dominant-baseline: central;
+            transition: all 0.3s ease;
+        }
+
+        .graph-node:hover .node-icon {
+            font-size: 28px;
+        }
+
+        /* 关系图连线标签 */
+        .rel-label-bg {
+            rx: 4;
+            ry: 4;
+        }
+
+        .rel-label-text {
+            font-size: 11px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: central;
+            letter-spacing: 1px;
+        }
+
+        /* 视图切换按钮 */
+        .view-switch {
+            position: fixed;
+            top: 80px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 40;
+        }
+
+        .switch-btn {
+            padding: 10px 16px;
+            background: linear-gradient(145deg, rgba(13, 31, 60, 0.95), rgba(10, 20, 40, 0.95));
+            border: 1px solid var(--border-gold-strong);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 130px;
+            backdrop-filter: blur(10px);
+        }
+
+        .switch-btn:hover {
+            color: var(--gold-light);
+            border-color: var(--gold);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .switch-btn.active {
+            color: var(--gold-light);
+            background: linear-gradient(145deg, rgba(200, 170, 110, 0.2), rgba(200, 170, 110, 0.05));
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.3);
+        }
+
+        .switch-btn-icon {
+            font-size: 16px;
+        }
+
+        /* 关系图标题 */
+        .relation-view-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--gold-light);
+            text-shadow: 0 0 30px rgba(200, 170, 110, 0.5);
+            letter-spacing: 8px;
+            z-index: 20;
+        }
+
+        .relation-view-subtitle {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            color: var(--text-secondary);
+            letter-spacing: 4px;
+            z-index: 20;
+        }
+
+        /* 关系图图例 */
+        .graph-legend {
+            position: absolute;
+            left: 30px;
+            bottom: 30px;
+            background: rgba(10, 20, 40, 0.9);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            padding: 15px 18px;
+            z-index: 20;
+            backdrop-filter: blur(10px);
+        }
+
+        .graph-legend h4 {
+            font-size: 14px;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+
+        .graph-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .graph-legend-line {
+            width: 30px;
+            height: 0;
+            border-top-width: 2px;
+        }
+
+        .graph-legend-line.enemy {
+            border-top: 2px dashed #ff4444;
+        }
+
+        .graph-legend-line.ally {
+            border-top: 2px solid #44aaff;
+        }
+
+        .graph-legend-line.friendly {
+            border-top: 2px solid #44ff88;
+        }
+
+        .graph-legend-line.neutral {
+            border-top: 2px dashed #888888;
+        }
+
+        /* 英雄详情弹窗 */
+        .hero-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(5px);
+        }
+
+        .hero-modal-overlay.active {
+            display: flex;
+        }
+
+        .hero-modal {
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            background: linear-gradient(145deg, #0d1a2e, #0a1428);
+            border: 1px solid var(--border-gold);
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(200, 170, 110, 0.15);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-modal-header {
+            padding: 30px 40px 20px;
+            background: linear-gradient(180deg, rgba(200, 170, 110, 0.1) 0%, transparent 100%);
+            text-align: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .hero-modal-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 30px rgba(200, 170, 110, 0.4);
+        }
+
+        .hero-modal-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--gold-light);
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        .hero-modal-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .hero-modal-region {
+            display: inline-block;
+            padding: 3px 12px;
+            background: rgba(200, 170, 110, 0.1);
+            border: 1px solid var(--border-gold);
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--gold);
+        }
+
+        .hero-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(20, 30, 50, 0.9);
+            border: 1px solid var(--border-gold);
+            color: var(--gold);
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .hero-modal-close:hover {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff6666;
+            border-color: #ff6666;
+            transform: scale(1.1);
+        }
+
+        .hero-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 40px 30px;
+        }
+
+        .hero-modal-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--gold);
+            margin: 20px 0 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(200, 170, 110, 0.2);
+            letter-spacing: 1px;
+        }
+
+        .hero-modal-section-title:first-child {
+            margin-top: 0;
+        }
+
+        .hero-modal-story {
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .hero-modal-story p {
+            margin-bottom: 14px;
+            text-indent: 2em;
+        }
+
+        /* 地区详情面板 */
+        .region-panel {
+            position: fixed;
+            right: -420px;
+            top: 80px;
+            bottom: 30px;
+            width: 400px;
+            background: linear-gradient(180deg, rgba(13, 31, 60, 0.98), rgba(10, 20, 40, 0.98));
+            border: 1px solid var(--border-gold-strong);
+            border-radius: 12px;
+            z-index: 50;
+            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .region-panel.active {
+            right: 30px;
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-gold);
+            position: relative;
+            background: linear-gradient(180deg, rgba(200, 170, 110, 0.1), transparent);
+        }
+
+        .panel-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(200, 170, 110, 0.1);
+            border: 1px solid var(--border-gold);
+            color: var(--gold);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .panel-close:hover {
+            background: rgba(200, 170, 110, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .region-icon {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .region-name {
+            font-size: 26px;
+            font-weight: bold;
+            color: var(--gold-light);
+            text-shadow: 0 0 20px rgba(200, 170, 110, 0.4);
+            margin-bottom: 4px;
+        }
+
+        .region-name-en {
+            font-size: 14px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+        }
+
+        .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(200, 170, 110, 0.3) transparent;
+        }
+
+        .panel-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .panel-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .panel-body::-webkit-scrollbar-thumb {
+            background: rgba(200, 170, 110, 0.3);
+            border-radius: 3px;
+        }
+
+        .region-desc {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-gold);
+        }
+
+        .champions-section h3 {
+            font-size: 16px;
+            color: var(--gold);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .champions-section h3::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--gold);
+            border-radius: 2px;
+        }
+
+        .champion-count {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: normal;
+            margin-left: auto;
+        }
+
+        .champions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .champion-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 4px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .champion-item:hover {
+            background: rgba(200, 170, 110, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .champion-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--border-gold-strong);
+            object-fit: cover;
+            margin-bottom: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .champion-item:hover .champion-avatar {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.4);
+        }
+
+        .champion-name {
+            font-size: 11px;
+            color: var(--text-primary);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* 图例 */
+        .map-legend {
+            position: fixed;
+            left: 30px;
+            bottom: 30px;
+            background: rgba(10, 20, 40, 0.9);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            padding: 15px 18px;
+            z-index: 40;
+            backdrop-filter: blur(10px);
+        }
+
+        .map-legend h4 {
+            font-size: 14px;
+            color: var(--gold);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .legend-item:hover {
+            color: var(--gold-light);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* 提示文字 */
+        .map-tip {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 20, 40, 0.9);
+            border: 1px solid var(--border-gold);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            z-index: 40;
+            animation: tipFade 3s ease-in-out infinite;
+        }
+
+        @keyframes tipFade {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .region-panel {
+                width: 100%;
+                right: -100%;
+                top: 60px;
+                bottom: 0;
+                border-radius: 0;
+            }
+            .region-panel.active {
+                right: 0;
+            }
+            .map-legend {
+                display: none;
+            }
+            .champions-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="map-header">
+        <a href="index.html" class="back-btn">
+            ← 返回英雄列表
+        </a>
+        <div class="map-title">
+            符文之地 <span>RUNETERRA · 势力地图</span>
+        </div>
+        <div style="width: 120px;"></div>
+    </div>
+
+    <!-- 提示 -->
+    <div class="map-tip">🗺️ 点击地图上的标记查看各地区英雄</div>
+
+    <!-- 视图切换按钮 -->
+    <div class="view-switch">
+        <button class="switch-btn active" id="btnMapView" onclick="switchView('map')">
+            <span class="switch-btn-icon">🗺️</span>
+            <span>地图视图</span>
+        </button>
+        <button class="switch-btn" id="btnGraphView" onclick="switchView('graph')">
+            <span class="switch-btn-icon">🕸️</span>
+            <span>关系图</span>
+        </button>
+    </div>
+
+    <!-- 地图容器 -->
+    <div class="map-container" id="mapContainer">
+        <div class="map-wrapper" id="mapWrapper">
+        <img src="maps/runeterra-world-map.jpg" alt="符文之地地图" class="world-map" id="worldMap">
+
+        <!-- 地区热点标记 - 纯图标 -->
+        <div class="region-marker region-demacia" data-region="demacia" style="left: 22%; top: 33%;">
+            <div class="marker-icon">⚔️</div>
+            <div class="marker-name">德玛西亚</div>
+        </div>
+
+        <div class="region-marker region-noxus" data-region="noxus" style="left: 66%; top: 33%;">
+            <div class="marker-icon">🩸</div>
+            <div class="marker-name">诺克萨斯</div>
+        </div>
+
+        <div class="region-marker region-freljord" data-region="freljord" style="left: 45%; top: 10%;">
+            <div class="marker-icon">❄️</div>
+            <div class="marker-name">弗雷尔卓德</div>
+        </div>
+
+        <div class="region-marker region-iona" data-region="iona" style="left: 82%; top: 50%;">
+            <div class="marker-icon">🌸</div>
+            <div class="marker-name">艾欧尼亚</div>
+        </div>
+
+        <div class="region-marker region-piltover" data-region="piltover" style="left: 50%; top: 42%;">
+            <div class="marker-icon">🔧</div>
+            <div class="marker-name">皮尔特沃夫</div>
+        </div>
+
+        <div class="region-marker region-zaun" data-region="zaun" style="left: 44%; top: 52%;">
+            <div class="marker-icon">🧪</div>
+            <div class="marker-name">祖安</div>
+        </div>
+
+        <div class="region-marker region-shurima" data-region="shurima" style="left: 52%; top: 75%;">
+            <div class="marker-icon">🏜️</div>
+            <div class="marker-name">恕瑞玛</div>
+        </div>
+
+        <div class="region-marker region-shadowisles" data-region="shadowisles" style="left: 74%; top: 76%;">
+            <div class="marker-icon">💀</div>
+            <div class="marker-name">暗影岛</div>
+        </div>
+
+        <div class="region-marker region-bilgewater" data-region="bilgewater" style="left: 25%; top: 62%;">
+            <div class="marker-icon">🏴‍☠️</div>
+            <div class="marker-name">比尔吉沃特</div>
+        </div>
+
+        <div class="region-marker region-targon" data-region="targon" style="left: 12%; top: 48%;">
+            <div class="marker-icon">⛰️</div>
+            <div class="marker-name">巨神峰</div>
+        </div>
+
+        <div class="region-marker region-void" data-region="void" style="left: 22%; top: 85%;">
+            <div class="marker-icon">🕳️</div>
+            <div class="marker-name">虚空之地</div>
+        </div>
+        </div>
+    </div>
+
+    <!-- 英雄详情弹窗 -->
+    <div class="hero-modal-overlay" id="heroModalOverlay">
+        <div class="hero-modal">
+            <button class="hero-modal-close" id="heroModalClose">✕</button>
+            <div class="hero-modal-header">
+                <div class="hero-modal-avatar" id="heroModalAvatar"></div>
+                <div class="hero-modal-name" id="heroModalName"></div>
+                <div class="hero-modal-title" id="heroModalTitle"></div>
+                <div class="hero-modal-region" id="heroModalRegion"></div>
+            </div>
+            <div class="hero-modal-body">
+                <div class="hero-modal-section-title">英雄传记</div>
+                <div class="hero-modal-story" id="heroModalStory"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 势力关系图视图 -->
+    <div class="relation-view" id="relationView">
+        <div class="relation-view-title">势力关系图</div>
+        <div class="relation-view-subtitle">DIPLOMATIC RELATIONS</div>
+
+        <div class="relation-graph-container">
+            <svg class="relation-graph-svg" viewBox="0 0 1000 700">
+                <defs>
+                    <!-- 渐变 -->
+                    <linearGradient id="gradEnemy" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#ff2222;stop-opacity:0.5" />
+                        <stop offset="50%" style="stop-color:#ff4444;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#ff2222;stop-opacity:0.5" />
+                    </linearGradient>
+                    <linearGradient id="gradAlly" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#3388ff;stop-opacity:0.5" />
+                        <stop offset="50%" style="stop-color:#44aaff;stop-opacity:0.9" />
+                        <stop offset="100%" style="stop-color:#3388ff;stop-opacity:0.5" />
+                    </linearGradient>
+                    <linearGradient id="gradFriendly" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#33dd66;stop-opacity:0.5" />
+                        <stop offset="50%" style="stop-color:#44ff88;stop-opacity:0.9" />
+                        <stop offset="100%" style="stop-color:#33dd66;stop-opacity:0.5" />
+                    </linearGradient>
+                    <linearGradient id="gradNeutral" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#666;stop-opacity:0.5" />
+                        <stop offset="50%" style="stop-color:#999;stop-opacity:0.8" />
+                        <stop offset="100%" style="stop-color:#666;stop-opacity:0.5" />
+                    </linearGradient>
+                    <!-- 节点发光 -->
+                    <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#c8aa6e" flood-opacity="0.5"/>
+                    </filter>
+                </defs>
+
+                <!-- 关系连线 -->
+                <g id="graphLines">
+                    <!-- 德玛西亚 ↔ 诺克萨斯 世仇 -->
+                    <path d="M 280,280 Q 500,240 700,280" fill="none" stroke="#ff4444" stroke-width="4" stroke-dasharray="10,6" opacity="0.9"/>
+                    <g transform="translate(490, 260)">
+                        <rect x="-32" y="-14" width="64" height="28" rx="6" fill="rgba(20,8,8,0.95)" stroke="#ff4444" stroke-width="2"/>
+                        <text x="0" y="4" text-anchor="middle" class="rel-label-text" fill="#ff8888" style="font-size:13px;">世仇</text>
+                    </g>
+
+                    <!-- 德玛西亚 ↔ 弗雷尔卓德 同盟 -->
+                    <path d="M 300,270 Q 400,150 480,120" fill="none" stroke="#44aaff" stroke-width="3.5" opacity="0.9"/>
+                    <g transform="translate(385, 185)">
+                        <rect x="-32" y="-14" width="64" height="28" rx="6" fill="rgba(8,15,30,0.95)" stroke="#44aaff" stroke-width="2"/>
+                        <text x="0" y="4" text-anchor="middle" class="rel-label-text" fill="#88ccff" style="font-size:13px;">同盟</text>
+                    </g>
+
+                    <!-- 诺克萨斯 ↔ 弗雷尔卓德 敌对 -->
+                    <path d="M 680,260 Q 600,170 520,130" fill="none" stroke="#ff6666" stroke-width="2.5" stroke-dasharray="8,5" opacity="0.7"/>
+
+                    <!-- 诺克萨斯 ↔ 艾欧尼亚 侵略 -->
+                    <path d="M 750,320 Q 830,420 850,500" fill="none" stroke="#ff4444" stroke-width="4" stroke-dasharray="10,6" opacity="0.9"/>
+                    <g transform="translate(810, 405)">
+                        <rect x="-32" y="-14" width="64" height="28" rx="6" fill="rgba(20,8,8,0.95)" stroke="#ff4444" stroke-width="2"/>
+                        <text x="0" y="4" text-anchor="middle" class="rel-label-text" fill="#ff8888" style="font-size:13px;">侵略</text>
+                    </g>
+
+                    <!-- 诺克萨斯 ↔ 恕瑞玛 征服 -->
+                    <path d="M 680,350 Q 620,480 580,560" fill="none" stroke="#ff6666" stroke-width="3" stroke-dasharray="8,5" opacity="0.85"/>
+                    <g transform="translate(625, 460)">
+                        <rect x="-32" y="-14" width="64" height="28" rx="6" fill="rgba(20,10,8,0.95)" stroke="#ff6666" stroke-width="2"/>
+                        <text x="0" y="4" text-anchor="middle" class="rel-label-text" fill="#ff9999" style="font-size:13px;">征服</text>
+                    </g>
+
+                    <!-- 恕瑞玛 ↔ 虚空 宿敌 -->
+                    <path d="M 450,600 Q 320,620 200,620" fill="none" stroke="#ff2222" stroke-width="5" stroke-dasharray="8,5" opacity="0.95"/>
+                    <g transform="translate(325, 610)">
+                        <rect x="-36" y="-16" width="72" height="32" rx="6" fill="rgba(25,5,10,0.95)" stroke="#ff2222" stroke-width="2.5"/>
+                        <text x="0" y="5" text-anchor="middle" class="rel-label-text" fill="#ff6666" style="font-size:14px; font-weight: bold;">宿敌</text>
+                    </g>
+
+                    <!-- 皮尔特沃夫 ↔ 祖安 双城 -->
+                    <line x1="490" y1="404" x2="490" y2="458" stroke="#44ff88" stroke-width="4" opacity="0.9"/>
+                    <g transform="translate(490, 431)">
+                        <rect x="-32" y="-14" width="64" height="28" rx="6" fill="rgba(8,25,15,0.95)" stroke="#44ff88" stroke-width="2"/>
+                        <text x="0" y="4" text-anchor="middle" class="rel-label-text" fill="#88ffaa" style="font-size:13px;">双城</text>
+                    </g>
+
+                    <!-- 德玛西亚 ↔ 皮尔特沃夫 友邦 -->
+                    <path d="M 320,310 Q 400,360 470,390" fill="none" stroke="#44ff88" stroke-width="2.5" opacity="0.8"/>
+                    <g transform="translate(395, 348)">
+                        <rect x="-32" y="-13" width="64" height="26" rx="6" fill="rgba(8,25,15,0.95)" stroke="#44ff88" stroke-width="1.5"/>
+                        <text x="0" y="3.5" text-anchor="middle" class="rel-label-text" fill="#88ffaa" style="font-size:12px;">友邦</text>
+                    </g>
+
+                    <!-- 皮尔特沃夫 ↔ 比尔吉沃特 贸易 -->
+                    <path d="M 440,450 Q 350,520 280,520" fill="none" stroke="#aaaaaa" stroke-width="2.5" stroke-dasharray="5,8" opacity="0.7"/>
+                    <g transform="translate(355, 492)">
+                        <rect x="-32" y="-13" width="64" height="26" rx="6" fill="rgba(15,15,20,0.95)" stroke="#999" stroke-width="1.5"/>
+                        <text x="0" y="3.5" text-anchor="middle" class="rel-label-text" fill="#ccc" style="font-size:12px;">贸易</text>
+                    </g>
+
+                    <!-- 暗影岛 ↔ 恕瑞玛 侵蚀 -->
+                    <path d="M 700,580 Q 630,570 560,580" fill="none" stroke="#aa66ff" stroke-width="2.5" stroke-dasharray="8,5" opacity="0.8"/>
+                    <g transform="translate(630, 568)">
+                        <rect x="-32" y="-13" width="64" height="26" rx="6" fill="rgba(18,8,25,0.95)" stroke="#aa66ff" stroke-width="1.5"/>
+                        <text x="0" y="3.5" text-anchor="middle" class="rel-label-text" fill="#cc99ff" style="font-size:12px;">侵蚀</text>
+                    </g>
+
+                    <!-- 艾欧尼亚 ↔ 暗影岛 威胁 -->
+                    <path d="M 830,530 Q 790,570 740,590" fill="none" stroke="#aa66ff" stroke-width="2.5" stroke-dasharray="8,5" opacity="0.7"/>
+
+                    <!-- 巨神峰 ↔ 恕瑞玛 中立 -->
+                    <path d="M 170,420 Q 300,500 440,580" fill="none" stroke="#888" stroke-width="2" stroke-dasharray="4,8" opacity="0.5"/>
+                </g>
+
+                <!-- 势力节点 -->
+                <g id="graphNodes">
+                    <!-- 弗雷尔卓德 顶部 -->
+                    <g class="graph-node" data-region="freljord" transform="translate(500, 80)" style="color: #aaddff;" onclick="showRegion('freljord')">
+                        <circle cx="0" cy="0" r="38" fill="rgba(170, 221, 255, 0.15)" stroke="#aaddff" stroke-width="3" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0">❄️</text>
+                        <text x="0" y="60" fill="#f0e6d2">弗雷尔卓德</text>
+                    </g>
+
+                    <!-- 德玛西亚 左上 -->
+                    <g class="graph-node" data-region="demacia" transform="translate(250, 260)" style="color: #ffd700;" onclick="showRegion('demacia')">
+                        <circle cx="0" cy="0" r="38" fill="rgba(255, 215, 0, 0.15)" stroke="#ffd700" stroke-width="3" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0">⚔️</text>
+                        <text x="0" y="60" fill="#f0e6d2">德玛西亚</text>
+                    </g>
+
+                    <!-- 诺克萨斯 右上 -->
+                    <g class="graph-node" data-region="noxus" transform="translate(730, 260)" style="color: #ff4444;" onclick="showRegion('noxus')">
+                        <circle cx="0" cy="0" r="38" fill="rgba(255, 68, 68, 0.15)" stroke="#ff4444" stroke-width="3" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0">🩸</text>
+                        <text x="0" y="60" fill="#f0e6d2">诺克萨斯</text>
+                    </g>
+
+                    <!-- 巨神峰 左 -->
+                    <g class="graph-node" data-region="targon" transform="translate(120, 400)" style="color: #ffffff;" onclick="showRegion('targon')">
+                        <circle cx="0" cy="0" r="32" fill="rgba(255, 255, 255, 0.1)" stroke="#ffffff" stroke-width="2.5" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0" style="font-size:20px;">⛰️</text>
+                        <text x="0" y="52" fill="#f0e6d2" style="font-size:12px;">巨神峰</text>
+                    </g>
+
+                    <!-- 皮尔特沃夫 中上 -->
+                    <g class="graph-node" data-region="piltover" transform="translate(490, 370)" style="color: #66ccff;" onclick="showRegion('piltover')">
+                        <circle cx="0" cy="0" r="34" fill="rgba(102, 204, 255, 0.15)" stroke="#66ccff" stroke-width="2.5" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0" style="font-size:22px;">🔧</text>
+                        <text x="0" y="54" fill="#f0e6d2" style="font-size:12px;">皮尔特沃夫</text>
+                    </g>
+
+                    <!-- 祖安 皮城正下方 -->
+                    <g class="graph-node" data-region="zaun" transform="translate(490, 490)" style="color: #99ff44;" onclick="showRegion('zaun')">
+                        <circle cx="0" cy="0" r="32" fill="rgba(153, 255, 68, 0.12)" stroke="#99ff44" stroke-width="2.5" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0" style="font-size:20px;">🧪</text>
+                        <text x="0" y="52" fill="#f0e6d2" style="font-size:12px;">祖安</text>
+                    </g>
+
+                    <!-- 艾欧尼亚 右 -->
+                    <g class="graph-node" data-region="iona" transform="translate(880, 480)" style="color: #44ff88;" onclick="showRegion('iona')">
+                        <circle cx="0" cy="0" r="38" fill="rgba(68, 255, 136, 0.15)" stroke="#44ff88" stroke-width="3" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0">🌸</text>
+                        <text x="0" y="60" fill="#f0e6d2">艾欧尼亚</text>
+                    </g>
+
+                    <!-- 比尔吉沃特 左下 -->
+                    <g class="graph-node" data-region="bilgewater" transform="translate(220, 530)" style="color: #66ddcc;" onclick="showRegion('bilgewater')">
+                        <circle cx="0" cy="0" r="32" fill="rgba(102, 221, 204, 0.12)" stroke="#66ddcc" stroke-width="2.5" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0" style="font-size:20px;">🏴‍☠️</text>
+                        <text x="0" y="52" fill="#f0e6d2" style="font-size:12px;">比尔吉沃特</text>
+                    </g>
+
+                    <!-- 恕瑞玛 中下 -->
+                    <g class="graph-node" data-region="shurima" transform="translate(500, 600)" style="color: #ffcc66;" onclick="showRegion('shurima')">
+                        <circle cx="0" cy="0" r="38" fill="rgba(255, 204, 102, 0.15)" stroke="#ffcc66" stroke-width="3" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0">🏜️</text>
+                        <text x="0" y="60" fill="#f0e6d2">恕瑞玛</text>
+                    </g>
+
+                    <!-- 暗影岛 右下 -->
+                    <g class="graph-node" data-region="shadowisles" transform="translate(720, 580)" style="color: #aa66ff;" onclick="showRegion('shadowisles')">
+                        <circle cx="0" cy="0" r="34" fill="rgba(170, 102, 255, 0.15)" stroke="#aa66ff" stroke-width="2.5" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0" style="font-size:22px;">💀</text>
+                        <text x="0" y="54" fill="#f0e6d2" style="font-size:12px;">暗影岛</text>
+                    </g>
+
+                    <!-- 虚空 最左下 -->
+                    <g class="graph-node" data-region="void" transform="translate(150, 620)" style="color: #cc44ff;" onclick="showRegion('void')">
+                        <circle cx="0" cy="0" r="34" fill="rgba(204, 68, 255, 0.15)" stroke="#cc44ff" stroke-width="2.5" filter="url(#nodeGlow)"/>
+                        <text class="node-icon" x="0" y="0" style="font-size:22px;">🕳️</text>
+                        <text x="0" y="54" fill="#f0e6d2" style="font-size:12px;">虚空之地</text>
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <!-- 关系图图例 -->
+        <div class="graph-legend">
+            <h4>🔗 外交关系</h4>
+            <div class="graph-legend-item">
+                <div class="graph-legend-line enemy"></div>
+                <span>敌对 / 世仇</span>
+            </div>
+            <div class="graph-legend-item">
+                <div class="graph-legend-line ally"></div>
+                <span>同盟</span>
+            </div>
+            <div class="graph-legend-item">
+                <div class="graph-legend-line friendly"></div>
+                <span>友好 / 双城</span>
+            </div>
+            <div class="graph-legend-item">
+                <div class="graph-legend-line neutral"></div>
+                <span>中立 / 贸易</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 地区详情面板 -->
+    <div class="region-panel" id="regionPanel">
+        <div class="panel-header">
+            <button class="panel-close" onclick="closePanel()">✕</button>
+            <div class="region-icon" id="panelIcon">⚔️</div>
+            <div class="region-name" id="panelName">德玛西亚</div>
+            <div class="region-name-en" id="panelNameEn">DEMACIA</div>
+        </div>
+        <div class="panel-body">
+            <div class="region-desc" id="panelDesc">
+                德玛西亚是一个以正义、荣耀和责任为核心价值观的强大王国。
+            </div>
+            <div class="champions-section">
+                <h3>
+                    英雄列表
+                    <span class="champion-count" id="championCount">0 位英雄</span>
+                </h3>
+                <div class="champions-grid" id="championsGrid">
+                    <!-- 英雄列表动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图例 -->
+    <div class="map-legend">
+        <h4>🗺️ 势力图例</h4>
+        <div class="legend-grid">
+            <div class="legend-item" onclick="showRegion('demacia')">
+                <div class="legend-dot" style="color: #ffd700; background: #ffd700;"></div>
+                德玛西亚
+            </div>
+            <div class="legend-item" onclick="showRegion('noxus')">
+                <div class="legend-dot" style="color: #ff4444; background: #ff4444;"></div>
+                诺克萨斯
+            </div>
+            <div class="legend-item" onclick="showRegion('iona')">
+                <div class="legend-dot" style="color: #44ff88; background: #44ff88;"></div>
+                艾欧尼亚
+            </div>
+            <div class="legend-item" onclick="showRegion('freljord')">
+                <div class="legend-dot" style="color: #aaddff; background: #aaddff;"></div>
+                弗雷尔卓德
+            </div>
+            <div class="legend-item" onclick="showRegion('piltover')">
+                <div class="legend-dot" style="color: #66ccff; background: #66ccff;"></div>
+                皮尔特沃夫
+            </div>
+            <div class="legend-item" onclick="showRegion('zaun')">
+                <div class="legend-dot" style="color: #99ff44; background: #99ff44;"></div>
+                祖安
+            </div>
+            <div class="legend-item" onclick="showRegion('shurima')">
+                <div class="legend-dot" style="color: #ffcc66; background: #ffcc66;"></div>
+                恕瑞玛
+            </div>
+            <div class="legend-item" onclick="showRegion('shadowisles')">
+                <div class="legend-dot" style="color: #aa66ff; background: #aa66ff;"></div>
+                暗影岛
+            </div>
+            <div class="legend-item" onclick="showRegion('bilgewater')">
+                <div class="legend-dot" style="color: #66ddcc; background: #66ddcc;"></div>
+                比尔吉沃特
+            </div>
+            <div class="legend-item" onclick="showRegion('targon')">
+                <div class="legend-dot" style="color: #ffffff; background: #ffffff;"></div>
+                巨神峰
+            </div>
+            <div class="legend-item" onclick="showRegion('void')">
+                <div class="legend-dot" style="color: #cc44ff; background: #cc44ff;"></div>
+                虚空之地
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 地区数据
+        const REGION_DATA = {
+            demacia: {
+                name: '德玛西亚',
+                nameEn: 'DEMACIA',
+                icon: '⚔️',
+                desc: '德玛西亚是一个以正义、荣耀和责任为核心价值观的强大王国。位于瓦洛兰大陆西部，以其严明的律法、英勇的战士和对魔法的忌惮而闻名。德玛西亚的士兵们身披银甲，手持符文锻造的武器，誓死捍卫他们的家园和信念。',
+                heroes: ['盖伦', '嘉文四世', '赵信', '拉克丝', '塞拉斯', '菲奥娜', '奎因', '波比', '加里奥', '希瓦娜', '薇恩', '凯隐']
+            },
+            noxus: {
+                name: '诺克萨斯',
+                nameEn: 'NOXUS',
+                icon: '🩸',
+                desc: '诺克萨斯是一个以力量为尊的扩张主义帝国。位于瓦洛兰大陆东部，崇尚强者为王，不问出身，只看实力。诺克萨斯的战士们残忍而高效，他们的铁蹄踏遍了整个大陆，将无数土地纳入帝国的版图。',
+                heroes: ['德莱厄斯', '德莱文', '卡特琳娜', '斯维因', '乐芙兰', '泰隆', '卡西奥佩娅', '锐雯', '塞恩', '沃里克', '蒙多医生', '辛吉德']
+            },
+            iona: {
+                name: '艾欧尼亚',
+                nameEn: 'IONIA',
+                icon: '🌸',
+                desc: '艾欧尼亚是一片充满灵性的岛屿群，位于诺克萨斯以东的海上。这里的人们崇尚自然、追求平衡，武道与灵能在这里交融。然而诺克萨斯的入侵打破了这片土地的宁静，艾欧尼亚人被迫拿起武器保卫家园。',
+                heroes: ['亚索', '永恩', '劫', '慎', '阿卡丽', '凯南', '阿狸', '卡尔玛', '艾瑞莉娅', '李青', '易', '孙悟空', '韦鲁斯', '烬', '瑟提']
+            },
+            freljord: {
+                name: '弗雷尔卓德',
+                nameEn: 'FRELJORD',
+                icon: '❄️',
+                desc: '弗雷尔卓德是一片被冰雪覆盖的蛮荒之地，位于瓦洛兰大陆最北端。这里生存着三个主要部落：阿瓦罗萨部落（艾希领导）、凛冬之爪（瑟庄妮领导）和冰霜守卫（丽桑卓领导）。三部落之间纷争不断，但古老的威胁正在冰层下苏醒。',
+                heroes: ['艾希', '瑟庄妮', '丽桑卓', '布隆', '奥拉夫', '泰达米尔', '沃利贝尔', '奥恩', '猪妹', '努努和威朗普', '冰鸟']
+            },
+            piltover: {
+                name: '皮尔特沃夫',
+                nameEn: 'PILTOVER',
+                icon: '🔧',
+                desc: '皮尔特沃夫是进步之城，以海克斯科技闻名于世，位于瓦洛兰大陆南部海岸。这里的学者和工匠们不断创新，用海克斯水晶驱动着城市的发展。皮尔特沃夫是贸易和文化的中心，吸引着来自世界各地的人们。',
+                heroes: ['杰斯', '凯特琳', '蔚', '伊泽瑞尔', '卡蜜尔', '黑默丁格', '兰博', '奥莉安娜']
+            },
+            zaun: {
+                name: '祖安',
+                nameEn: 'ZAUN',
+                icon: '🧪',
+                desc: '祖安是皮尔特沃夫脚下的地下城市，被工业废气和炼金实验笼罩。这里是炼金科技的中心，危险而混乱。祖安的居民们在恶劣的环境中顽强生存，诞生了许多疯狂的科学家和强大的战士。',
+                heroes: ['金克丝', '维克托', '艾克', '辛吉德', '沃里克', '蒙多医生', '图奇', '扎克', '布里茨']
+            },
+            shurima: {
+                name: '恕瑞玛',
+                nameEn: 'SHURIMA',
+                icon: '🏜️',
+                desc: '恕瑞玛是一个失落的沙漠帝国，位于瓦洛兰大陆南部。数千年前，飞升者们统治着这片土地，然而一次背叛让帝国陨落，黄沙掩埋了曾经的辉煌。如今，沙漠皇帝阿兹尔归来，恕瑞玛正在复兴的道路上。',
+                heroes: ['阿兹尔', '泽拉斯', '内瑟斯', '雷克顿', '希维尔', '拉莫斯', '阿木木', '卡莎', '卡萨丁', '马尔扎哈', '雷克塞', '斯卡纳']
+            },
+            shadowisles: {
+                name: '暗影岛',
+                nameEn: 'SHADOW ISLES',
+                icon: '💀',
+                desc: '暗影岛是一片被诅咒的土地，位于符文之地东南方的大海之中。曾经美丽的岛屿被破败之咒侵蚀，变成了亡灵的乐园。每年的蚀魂夜，岛上的黑雾会席卷大陆，带走无数生命。',
+                heroes: ['佛耶戈', '锤石', '卢锡安', '赛娜', '格温', '莫德凯撒', '卡尔萨斯', '赫卡里姆', '约里克', '伊莉丝', '维迦', '千珏']
+            },
+            bilgewater: {
+                name: '比尔吉沃特',
+                nameEn: 'BILGEWATER',
+                icon: '🏴‍☠️',
+                desc: '比尔吉沃特是一座无法无天的海港城市，位于瓦洛兰大陆西部的蓝焰群岛。这里是海盗、走私犯和冒险家的天堂，没有法律，只有金钱和实力说了算。在这里，你可以找到任何东西——只要你付得起价钱。',
+                heroes: ['厄运小姐', '崔斯特', '格雷福斯', '派克', '诺提勒斯', '菲兹', '塔姆', '普朗克']
+            },
+            targon: {
+                name: '巨神峰',
+                nameEn: 'MOUNT TARGON',
+                icon: '⛰️',
+                desc: '巨神峰是符文之地最高的山峰，位于大陆西部。传说山顶居住着星灵，他们会挑选凡人与自己合二为一，成为半神。攀登巨神峰的人九死一生，但登顶者将获得星辰的力量。',
+                heroes: ['蕾欧娜', '黛安娜', '潘森', '佐伊', '阿特瑞斯', '索拉卡', '巴德', '奥瑞利安索尔']
+            },
+            void: {
+                name: '虚空之地',
+                nameEn: 'THE VOID',
+                icon: '🕳️',
+                desc: '虚空是来自另一个维度的恐怖存在，位于符文之地的最深处。它是一个吞噬一切的虚无之地，虚空生物不断地试图入侵符文之地，将整个世界化为虚无。虚空的威胁无处不在，却鲜有人知。',
+                heroes: ['卡兹克', '科加斯', '卡萨丁', '卡莎', '马尔扎哈', '雷克塞', '克格莫', '维克兹']
+            }
+        };
+
+        // 点击地区标记
+        document.querySelectorAll('.region-marker').forEach(marker => {
+            marker.addEventListener('click', function() {
+                const regionId = this.dataset.region;
+                showRegion(regionId);
+            });
+        });
+
+        // 显示地区详情
+        function showRegion(regionId) {
+            const region = REGION_DATA[regionId];
+            if (!region) return;
+
+            document.getElementById('panelIcon').textContent = region.icon;
+            document.getElementById('panelName').textContent = region.name;
+            document.getElementById('panelNameEn').textContent = region.nameEn;
+            document.getElementById('panelDesc').textContent = region.desc;
+
+            // 生成英雄列表
+            const grid = document.getElementById('championsGrid');
+            grid.innerHTML = '';
+            
+            const allHeroes = CHAMPIONS || [];
+            const regionHeroes = allHeroes.filter(h => region.heroes.includes(h.name));
+            
+            regionHeroes.forEach(hero => {
+                const item = document.createElement('div');
+                item.className = 'champion-item';
+                item.style.cursor = 'pointer';
+                item.innerHTML = `
+                    <img src="${getChampionAvatar(hero.alias)}" alt="${hero.name}" class="champion-avatar">
+                    <span class="champion-name">${hero.name}</span>
+                `;
+                item.addEventListener('click', () => openHeroModal(hero));
+                grid.appendChild(item);
+            });
+
+            document.getElementById('championCount').textContent = regionHeroes.length + ' 位英雄';
+
+            // 显示面板
+            document.getElementById('regionPanel').classList.add('active');
+
+            // 高亮对应标记
+            document.querySelectorAll('.region-marker').forEach(m => m.style.opacity = '0.4');
+            document.querySelector('.region-marker[data-region="' + regionId + '"]').style.opacity = '1';
+            document.querySelector('.region-marker[data-region="' + regionId + '"]').style.transform = 'translate(-50%, -50%) scale(1.3)';
+        }
+
+        // 关闭面板
+        function closePanel() {
+            document.getElementById('regionPanel').classList.remove('active');
+            document.querySelectorAll('.region-marker').forEach(m => {
+                m.style.opacity = '1';
+                m.style.transform = 'translate(-50%, -50%)';
+            });
+        }
+
+        // 点击地图空白处关闭面板
+        document.getElementById('mapContainer').addEventListener('click', function(e) {
+            if (e.target.id === 'mapContainer' || e.target.id === 'worldMap') {
+                closePanel();
+            }
+        });
+
+        // 页面加载完成
+        window.addEventListener('load', function() {
+            // 如果URL有参数，直接显示对应地区
+            const params = new URLSearchParams(window.location.search);
+            const region = params.get('region');
+            if (region && REGION_DATA[region]) {
+                setTimeout(() => showRegion(region), 500);
+            }
+        });
+
+        // 切换视图：地图视图 / 关系图
+        let currentView = 'map';
+        function switchView(view) {
+            currentView = view;
+            const mapContainer = document.querySelector('.map-container');
+            const relationView = document.getElementById('relationView');
+            const btnMap = document.getElementById('btnMapView');
+            const btnGraph = document.getElementById('btnGraphView');
+            const mapLegend = document.querySelector('.map-legend');
+            const relationLegend = document.getElementById('relationLegend');
+
+            if (view === 'map') {
+                mapContainer.style.display = 'flex';
+                relationView.classList.remove('active');
+                btnMap.classList.add('active');
+                btnGraph.classList.remove('active');
+                if (mapLegend) mapLegend.style.display = 'block';
+                if (relationLegend) relationLegend.style.display = 'block';
+            } else {
+                mapContainer.style.display = 'none';
+                relationView.classList.add('active');
+                btnMap.classList.remove('active');
+                btnGraph.classList.add('active');
+                if (mapLegend) mapLegend.style.display = 'none';
+                if (relationLegend) relationLegend.style.display = 'none';
+            }
+            
+            closePanel();
+        }
+
+        // 打开英雄详情弹窗
+        function openHeroModal(hero) {
+            const overlay = document.getElementById('heroModalOverlay');
+            const avatar = document.getElementById('heroModalAvatar');
+            const nameEl = document.getElementById('heroModalName');
+            const titleEl = document.getElementById('heroModalTitle');
+            const regionEl = document.getElementById('heroModalRegion');
+            const storyEl = document.getElementById('heroModalStory');
+
+            // 基本信息
+            avatar.style.backgroundImage = `url(${getChampionAvatar(hero.alias)})`;
+            nameEl.textContent = hero.name;
+            titleEl.textContent = hero.title || '';
+            regionEl.textContent = hero.region || '';
+
+            // 故事内容
+            const allStories = window.ALL_CHAMPION_STORIES || {};
+            const storyData = allStories[hero.name];
+            if (storyData && storyData.story) {
+                const paragraphs = storyData.story.split('\n\n').filter(p => p.trim());
+                storyEl.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+            } else if (hero.story) {
+                const paragraphs = hero.story.split('\n\n').filter(p => p.trim());
+                storyEl.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+            } else {
+                storyEl.innerHTML = '<p>暂无详细传记，敬请期待...</p>';
+            }
+
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭英雄详情弹窗
+        function closeHeroModal() {
+            document.getElementById('heroModalOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ESC键关闭弹窗
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const overlay = document.getElementById('heroModalOverlay');
+                if (overlay.classList.contains('active')) {
+                    closeHeroModal();
+                }
+            }
+        });
+
+        // 绑定关闭按钮和点击遮罩关闭
+        document.getElementById('heroModalClose').addEventListener('click', closeHeroModal);
+        document.getElementById('heroModalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'heroModalOverlay') {
+                closeHeroModal();
+            }
+        });
+    </script>
+</body>
+</html>
