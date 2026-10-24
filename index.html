@@ -7,6 +7,7 @@
     <script src="champions-data.js"></script>
     <script src="stories-data.js"></script>
     <script src="relations-data.js"></script>
+    <script src="backgrounds-data.js"></script>
     <style>
         * {
             margin: 0;
@@ -123,17 +124,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('https://ossweb-img.qq.com/images/lol/wallpapers/wallpaper_1680x1050_49.jpg');
+            background-image: url('https://game.gtimg.cn/images/lol/act/img/skin/big86001.jpg');
             background-size: cover;
             background-position: center top;
-            opacity: 0.2;
-            filter: blur(3px);
-            animation: bgFade 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes bgFade {
-            0% { opacity: 0.15; filter: blur(3px); }
-            100% { opacity: 0.25; filter: blur(1px); }
+            opacity: 0.35;
+            filter: blur(0px);
+            transition: background-image 0.8s ease-in-out, opacity 0.8s ease-in-out;
         }
 
         .bg-gradient {
@@ -143,7 +139,7 @@
             width: 100%;
             height: 100%;
             background: 
-                linear-gradient(180deg, rgba(10, 20, 40, 0.3) 0%, rgba(10, 20, 40, 0.85) 40%, rgba(10, 20, 40, 0.95) 100%),
+                linear-gradient(180deg, rgba(10, 20, 40, 0.2) 0%, rgba(10, 20, 40, 0.75) 35%, rgba(10, 20, 40, 0.92) 100%),
                 radial-gradient(ellipse at 30% 20%, rgba(3, 151, 171, 0.15) 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 60%, rgba(200, 170, 110, 0.1) 0%, transparent 50%);
         }
@@ -273,6 +269,231 @@
             color: var(--blue-dark);
             border-color: var(--gold);
             font-weight: bold;
+        }
+
+        /* 背景切换器 */
+        .bg-switcher-btn {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #d4af37, #8b6914);
+            border: 3px solid #f0d78c;
+            color: var(--blue-dark);
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(212, 175, 55, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+        }
+
+        .bg-switcher-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.6s;
+        }
+
+        .bg-switcher-btn:hover::before {
+            left: 100%;
+        }
+
+        .bg-switcher-btn:hover {
+            transform: scale(1.15) rotate(-8deg);
+            box-shadow: 
+                0 6px 30px rgba(0, 0, 0, 0.6),
+                0 0 35px rgba(212, 175, 55, 0.6),
+                inset 0 2px 4px rgba(255, 255, 255, 0.4);
+            border-color: #fff5d4;
+        }
+
+        .bg-switcher-btn:active {
+            transform: scale(0.95);
+        }
+
+        .bg-switcher-btn svg {
+            width: 34px;
+            height: 34px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+        }
+
+        .bg-switcher-panel {
+            position: fixed;
+            right: 90px;
+            bottom: 20px;
+            width: 340px;
+            background: linear-gradient(145deg, rgba(15, 25, 50, 0.98), rgba(8, 15, 35, 0.98));
+            border: 1px solid var(--border-gold);
+            border-radius: 16px;
+            padding: 18px;
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(20px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 15px 50px rgba(0, 0, 0, 0.6),
+                0 0 40px rgba(200, 170, 110, 0.1);
+        }
+
+        .bg-switcher-panel.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0) scale(1);
+        }
+
+        .bg-switcher-title {
+            color: var(--gold);
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 0 10px rgba(200, 170, 110, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .bg-switcher-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .bg-thumb {
+            width: 100%;
+            padding-bottom: 145%;
+            border-radius: 10px;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .bg-thumb:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(200, 170, 110, 0.3);
+            border-color: rgba(200, 170, 110, 0.5);
+        }
+
+        .bg-thumb.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.5);
+        }
+
+        .bg-thumb.active::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(145deg, #d4af37, #8b6914);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid #f0d78c;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .bg-thumb.active::before {
+            content: '✓';
+            position: absolute;
+            top: 7px;
+            right: 8px;
+            color: #1a1a2e;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 2;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.3);
+        }
+
+        .bg-thumb-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent);
+            color: #f0d78c;
+            font-size: 11px;
+            padding: 20px 6px 6px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .bg-thumb:hover .bg-thumb-label {
+            opacity: 1;
+        }
+
+        .bg-opacity-slider {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(200, 170, 110, 0.2);
+        }
+
+        .bg-opacity-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bg-opacity-label span:last-child {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .bg-opacity-input {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(90deg, rgba(200, 170, 110, 0.1), rgba(200, 170, 110, 0.3));
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .bg-opacity-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(145deg, #d4af37, #8b6914);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(200, 170, 110, 0.5);
+            border: 2px solid #f0d78c;
+            transition: transform 0.2s;
+        }
+
+        .bg-opacity-input::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
         }
 
         /* 头部 */
@@ -2047,6 +2268,7 @@
         function init() {
             initRegionFilter();
             initParticles();
+            initBackgroundSwitcher();
             totalCount.textContent = allChampions.length;
             filterChampions();
             
@@ -2250,6 +2472,87 @@
         function closeModal() {
             modalOverlay.classList.remove('active');
             document.body.style.overflow = '';
+        }
+
+        // ==================== 背景切换器功能 ====================
+        function initBackgroundSwitcher() {
+            const switcherBtn = document.getElementById('bgSwitcherBtn');
+            const switcherPanel = document.getElementById('bgSwitcherPanel');
+            const grid = document.getElementById('bgSwitcherGrid');
+            const opacitySlider = document.getElementById('bgOpacitySlider');
+            const opacityValue = document.getElementById('bgOpacityValue');
+            const bgImage = document.querySelector('.bg-image');
+            
+            // 从localStorage读取保存的设置
+            const savedBg = localStorage.getItem('lol-bg-index');
+            const savedOpacity = localStorage.getItem('lol-bg-opacity');
+            let currentBgIndex = parseInt(savedBg) || 0;
+            let currentOpacity = parseInt(savedOpacity) || 40;
+            
+            // 背景数据
+            const backgrounds = window.BACKGROUNDS || [
+                { url: 'https://game.gtimg.cn/images/lol/act/img/skin/big86001.jpg', name: '默认' }
+            ];
+            
+            // 生成缩略图
+            grid.innerHTML = '';
+            backgrounds.forEach((bg, index) => {
+                const thumb = document.createElement('div');
+                thumb.className = 'bg-thumb' + (index === currentBgIndex ? ' active' : '');
+                thumb.style.backgroundImage = `url('${bg.url}')`;
+                thumb.innerHTML = `<div class="bg-thumb-label">${bg.name}</div>`;
+                thumb.addEventListener('click', () => {
+                    switchBackground(index);
+                });
+                grid.appendChild(thumb);
+            });
+            
+            // 应用初始透明度
+            bgImage.style.opacity = currentOpacity / 100;
+            opacitySlider.value = currentOpacity;
+            opacityValue.textContent = currentOpacity + '%';
+            
+            // 切换背景
+            function switchBackground(index) {
+                currentBgIndex = index;
+                const bg = backgrounds[index];
+                
+                // 预加载图片
+                const img = new Image();
+                img.onload = () => {
+                    bgImage.style.backgroundImage = `url('${bg.url}')`;
+                };
+                img.src = bg.url;
+                
+                // 更新选中状态
+                document.querySelectorAll('.bg-thumb').forEach((t, i) => {
+                    t.classList.toggle('active', i === index);
+                });
+                
+                // 保存设置
+                localStorage.setItem('lol-bg-index', index);
+            }
+            
+            // 透明度调节
+            opacitySlider.addEventListener('input', (e) => {
+                currentOpacity = parseInt(e.target.value);
+                bgImage.style.opacity = currentOpacity / 100;
+                opacityValue.textContent = currentOpacity + '%';
+                localStorage.setItem('lol-bg-opacity', currentOpacity);
+            });
+            
+            // 切换面板显示
+            switcherBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                switcherPanel.classList.toggle('active');
+            });
+            
+            // 点击其他地方关闭面板
+            document.addEventListener('click', (e) => {
+                if (!switcherPanel.contains(e.target) && e.target !== switcherBtn) {
+                    switcherPanel.classList.remove('active');
+                }
+            });
         }
 
         // ==================== 关系图功能 ====================
@@ -2541,7 +2844,60 @@
         });
 
         // 启动
-        init();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
+    <!-- 背景切换器 -->
+    <button class="bg-switcher-btn" id="bgSwitcherBtn" title="切换背景">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 魄罗身体 -->
+            <ellipse cx="32" cy="38" rx="22" ry="20" fill="#f5f5f5"/>
+            <ellipse cx="32" cy="38" rx="22" ry="20" fill="url(#poroGrad)"/>
+            <!-- 耳朵 -->
+            <ellipse cx="16" cy="20" rx="6" ry="10" fill="#f5f5f5" transform="rotate(-20 16 20)"/>
+            <ellipse cx="48" cy="20" rx="6" ry="10" fill="#f5f5f5" transform="rotate(20 48 20)"/>
+            <ellipse cx="16" cy="20" rx="4" ry="7" fill="#ffcccc" transform="rotate(-20 16 20)"/>
+            <ellipse cx="48" cy="20" rx="4" ry="7" fill="#ffcccc" transform="rotate(20 48 20)"/>
+            <!-- 眼睛 -->
+            <ellipse cx="24" cy="36" rx="4" ry="5" fill="#2a1a0a"/>
+            <ellipse cx="40" cy="36" rx="4" ry="5" fill="#2a1a0a"/>
+            <circle cx="25" cy="34" r="1.5" fill="white"/>
+            <circle cx="41" cy="34" r="1.5" fill="white"/>
+            <!-- 鼻子 -->
+            <ellipse cx="32" cy="42" rx="3" ry="2.5" fill="#ff9999"/>
+            <!-- 腮红 -->
+            <ellipse cx="18" cy="42" rx="4" ry="3" fill="#ffbbbb" opacity="0.5"/>
+            <ellipse cx="46" cy="42" rx="4" ry="3" fill="#ffbbbb" opacity="0.5"/>
+            <!-- 嘴巴 -->
+            <path d="M29 46 Q32 49 35 46" stroke="#cc8888" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- 角/毛 -->
+            <path d="M26 18 Q28 12 30 18" stroke="#e8e8e8" stroke-width="2" fill="none"/>
+            <path d="M32 16 Q32 10 32 16" stroke="#e8e8e8" stroke-width="2" fill="none"/>
+            <path d="M34 18 Q36 12 38 18" stroke="#e8e8e8" stroke-width="2" fill="none"/>
+            <defs>
+                <radialGradient id="poroGrad" cx="50%" cy="30%" r="70%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="100%" stop-color="#dddddd"/>
+                </radialGradient>
+            </defs>
+        </svg>
+    </button>
+    <div class="bg-switcher-panel" id="bgSwitcherPanel">
+        <div class="bg-switcher-title">🎨 选择背景主题</div>
+        <div class="bg-switcher-grid" id="bgSwitcherGrid">
+            <!-- 由JS生成 -->
+        </div>
+        <div class="bg-opacity-slider">
+            <div class="bg-opacity-label">
+                <span>背景可见度</span>
+                <span id="bgOpacityValue">35%</span>
+            </div>
+            <input type="range" class="bg-opacity-input" id="bgOpacitySlider" min="10" max="90" value="35">
+        </div>
+    </div>
+
 </body>
 </html>
