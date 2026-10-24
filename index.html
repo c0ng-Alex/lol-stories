@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英雄联盟 - 英雄故事大全</title>
+    <script src="champions-data.js"></script>
+    <script src="stories-data.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #c8aa6e;
+            --gold-light: #f0e6d2;
+            --gold-dark: #a8884e;
+            --gold-darker: #7a6438;
+            --blue-dark: #0a1428;
+            --blue-mid: #0d1f3c;
+            --blue-light: #0397ab;
+            --blue-accent: #1e8fc6;
+            --border-gold: rgba(200, 170, 110, 0.3);
+            --border-gold-strong: rgba(200, 170, 110, 0.5);
+            --text-primary: #f0e6d2;
+            --text-secondary: #a09b8c;
+            --text-muted: #6b6a5e;
+            --shadow-gold: 0 0 30px rgba(200, 170, 110, 0.2);
+            --shadow-gold-strong: 0 0 40px rgba(200, 170, 110, 0.4);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', 'SimHei', sans-serif;
+            background-color: var(--blue-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 页面加载动画 */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--blue-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        .page-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader-logo {
+            width: 80px;
+            height: 80px;
+            border: 3px solid var(--border-gold);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .loader-logo::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px solid transparent;
+            border-top-color: var(--gold-light);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite reverse;
+        }
+
+        .loader-text {
+            color: var(--gold);
+            font-size: 14px;
+            letter-spacing: 4px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* 背景层 */
+        .bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://ossweb-img.qq.com/images/lol/wallpapers/wallpaper_1680x1050_49.jpg');
+            background-size: cover;
+            background-position: center top;
+            opacity: 0.2;
+            filter: blur(3px);
+            animation: bgFade 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgFade {
+            0% { opacity: 0.15; filter: blur(3px); }
+            100% { opacity: 0.25; filter: blur(1px); }
+        }
+
+        .bg-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(180deg, rgba(10, 20, 40, 0.3) 0%, rgba(10, 20, 40, 0.85) 40%, rgba(10, 20, 40, 0.95) 100%),
+                radial-gradient(ellipse at 30% 20%, rgba(3, 151, 171, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 60%, rgba(200, 170, 110, 0.1) 0%, transparent 50%);
+        }
+
+        /* 粒子装饰 */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatParticle 15s infinite;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) scale(0);
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100vh) scale(1);
+            }
+        }
+
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: linear-gradient(180deg, rgba(10, 20, 40, 0.95) 0%, rgba(10, 20, 40, 0.85) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-gold);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .navbar.visible {
+            transform: translateY(0);
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .navbar-logo-icon {
+            width: 32px;
+            height: 32px;
+            border: 1.5px solid var(--gold);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e2328, #0a1428);
+        }
+
+        .navbar-logo-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .navbar-logo-text {
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(180deg, var(--gold-light), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 8px 18px;
+            background: transparent;
+            border: 1px solid var(--border-gold);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold-light);
+            background: rgba(200, 170, 110, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--blue-dark);
+            border-color: var(--gold);
+            font-weight: bold;
+        }
+
+        /* 头部 */
+        .header {
+            position: relative;
+            z-index: 10;
+            padding: 80px 20px 30px;
+            text-align: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #1e2328 0%, #0a1428 50%, #1e2328 100%);
+            border-radius: 12px;
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 30px rgba(200, 170, 110, 0.5), inset 0 0 20px rgba(200, 170, 110, 0.1);
+            animation: logoGlow 3s ease-in-out infinite alternate;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 40px;
+            height: 40px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        @keyframes logoGlow {
+            from { box-shadow: 0 0 20px rgba(200, 170, 110, 0.3); }
+            to { box-shadow: 0 0 40px rgba(200, 170, 110, 0.6); }
+        }
+
+        .logo-text {
+            font-size: 2.8rem;
+            font-weight: bold;
+            background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 8px;
+            text-shadow: 0 0 40px rgba(200, 170, 110, 0.3);
+        }
+
+        .subtitle {
+            color: var(--blue-light);
+            font-size: 1rem;
+            letter-spacing: 10px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        /* 金色装饰分割线 */
+        .gold-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .gold-divider-line {
+            height: 1px;
+            width: 80px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .gold-divider-icon {
+            color: var(--gold);
+            font-size: 14px;
+        }
+
+        /* 搜索和筛选 */
+        .controls {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto 25px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-gold);
+            border-radius: 30px;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 20px rgba(200, 170, 110, 0.2), inset 0 0 10px rgba(200, 170, 110, 0.05);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 18px;
+        }
+
+        .region-filter {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .region-btn {
+            padding: 8px 16px;
+            background: rgba(10, 20, 40, 0.6);
+            border: 1px solid var(--border-gold);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .region-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(200, 170, 110, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .region-btn:hover::before {
+            left: 100%;
+        }
+
+        .region-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold-light);
+            background: rgba(200, 170, 110, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .region-btn.active {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--blue-dark);
+            border-color: var(--gold);
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(200, 170, 110, 0.3);
+        }
+
+        /* 前言介绍卡片 */
+        .intro-section {
+            position: relative;
+            z-index: 5;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px 20px;
+        }
+
+        .intro-card {
+            position: relative;
+            background: 
+                linear-gradient(135deg, rgba(10, 20, 40, 0.9) 0%, rgba(13, 31, 60, 0.9) 100%);
+            border: 1px solid var(--border-gold-strong);
+            border-radius: 16px;
+            padding: 40px 50px;
+            overflow: hidden;
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.4),
+                inset 0 0 60px rgba(200, 170, 110, 0.03);
+        }
+
+        .intro-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+        }
+
+        .intro-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+        }
+
+        /* 四角装饰 */
+        .corner-decoration {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: var(--gold);
+            border-style: solid;
+            border-width: 0;
+        }
+
+        .corner-tl {
+            top: 8px;
+            left: 8px;
+            border-top-width: 2px;
+            border-left-width: 2px;
+        }
+
+        .corner-tr {
+            top: 8px;
+            right: 8px;
+            border-top-width: 2px;
+            border-right-width: 2px;
+        }
+
+        .corner-bl {
+            bottom: 8px;
+            left: 8px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+        }
+
+        .corner-br {
+            bottom: 8px;
+            right: 8px;
+            border-bottom-width: 2px;
+            border-right-width: 2px;
+        }
+
+        .intro-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .intro-title {
+            font-size: 1.8rem;
+            background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+
+        .intro-subtitle {
+            color: var(--blue-light);
+            font-size: 0.85rem;
+            letter-spacing: 6px;
+            opacity: 0.8;
+        }
+
+        .intro-content {
+            line-height: 2;
+            color: rgba(240, 230, 210, 0.85);
+            font-size: 15px;
+            text-align: justify;
+            text-indent: 2em;
+            margin-bottom: 30px;
+        }
+
+        .intro-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px 10px;
+            background: rgba(200, 170, 110, 0.05);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(200, 170, 110, 0.1);
+            border-color: var(--gold);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(180deg, var(--gold-light), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            position: relative;
+            z-index: 5;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px 50px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-gold);
+            position: relative;
+        }
+
+        .stats-bar::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 60px;
+            height: 1px;
+            background: var(--gold);
+        }
+
+        .stats-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .stats-count {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 18px;
+            margin: 0 5px;
+        }
+
+        /* 英雄网格 */
+        .champions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .champion-card {
+            position: relative;
+            background: rgba(10, 20, 40, 0.7);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .champion-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .champion-card:hover {
+            transform: translateY(-10px) scale(1.03);
+            border-color: var(--gold);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(200, 170, 110, 0.25);
+            z-index: 10;
+        }
+
+        .champion-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 5;
+        }
+
+        .champion-card:hover::before {
+            opacity: 1;
+        }
+
+        /* 英雄头像 */
+        .champion-avatar {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a2a4a 0%, #0d1f3c 100%);
+        }
+
+        .champion-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s ease;
+            filter: brightness(0.9);
+        }
+
+        .champion-card:hover .champion-avatar img {
+            transform: scale(1.15);
+            filter: brightness(1.15) saturate(1.1);
+        }
+
+        /* 头像渐变遮罩 */
+        .champion-avatar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(to top, rgba(10, 20, 40, 0.95) 0%, rgba(10, 20, 40, 0.5) 50%, transparent 100%);
+            pointer-events: none;
+            transition: height 0.3s ease;
+        }
+
+        .champion-card:hover .champion-avatar::after {
+            height: 70%;
+        }
+
+        .region-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 3px 8px;
+            background: rgba(10, 20, 40, 0.85);
+            border: 1px solid var(--border-gold);
+            border-radius: 10px;
+            font-size: 10px;
+            color: var(--gold);
+            backdrop-filter: blur(5px);
+            z-index: 3;
+            transition: all 0.3s ease;
+        }
+
+        .champion-card:hover .region-badge {
+            border-color: var(--gold);
+            background: rgba(200, 170, 110, 0.15);
+        }
+
+        .champion-info {
+            padding: 12px 10px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .champion-name {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: var(--gold-light);
+            margin-bottom: 2px;
+            transition: color 0.3s ease;
+        }
+
+        .champion-card:hover .champion-name {
+            color: var(--gold);
+        }
+
+        .champion-english {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+            text-transform: capitalize;
+        }
+
+        .champion-title {
+            font-size: 0.75rem;
+            color: var(--blue-light);
+        }
+
+        /* 无结果提示 */
+        .no-results {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+            display: none;
+        }
+
+        .no-results.show {
+            display: block;
+        }
+
+        .no-results-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.4;
+        }
+
+        /* 页脚 */
+        .footer {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            padding: 40px 20px 30px;
+            color: rgba(240, 230, 210, 0.4);
+            font-size: 13px;
+            border-top: 1px solid var(--border-gold);
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer a {
+            color: var(--gold);
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer a:hover {
+            opacity: 0.8;
+        }
+
+        .footer-copyright {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(200, 170, 110, 0.15);
+            font-size: 12px;
+            color: rgba(240, 230, 210, 0.3);
+        }
+
+        .footer-gold-line {
+            width: 100px;
+            height: 1px;
+            margin: 0 auto 20px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        /* 模态框通用样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            position: relative;
+            background: linear-gradient(135deg, #0a1428 0%, #0d1f3c 100%);
+            border: 2px solid var(--gold);
+            border-radius: 16px;
+            max-width: 800px;
+            width: 92%;
+            max-height: 88vh;
+            overflow-y: auto;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(200, 170, 110, 0.1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        /* 模态框四角装饰 */
+        .modal-corner {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            border-color: var(--gold);
+            border-style: solid;
+            border-width: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .modal-corner-tl {
+            top: 6px;
+            left: 6px;
+            border-top-width: 2px;
+            border-left-width: 2px;
+        }
+
+        .modal-corner-tr {
+            top: 6px;
+            right: 6px;
+            border-top-width: 2px;
+            border-right-width: 2px;
+        }
+
+        .modal-corner-bl {
+            bottom: 6px;
+            left: 6px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+        }
+
+        .modal-corner-br {
+            bottom: 6px;
+            right: 6px;
+            border-bottom-width: 2px;
+            border-right-width: 2px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border-gold);
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--gold);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 20;
+        }
+
+        .modal-close:hover {
+            background: var(--gold);
+            color: var(--blue-dark);
+            transform: rotate(90deg);
+            box-shadow: 0 0 20px rgba(200, 170, 110, 0.4);
+        }
+
+        /* 英雄详情模态框 */
+        .detail-modal-header {
+            padding: 50px 40px 30px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-gold);
+            background: 
+                linear-gradient(180deg, rgba(200, 170, 110, 0.08) 0%, transparent 100%),
+                radial-gradient(ellipse at 50% 0%, rgba(200, 170, 110, 0.12) 0%, transparent 60%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .detail-modal-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(200, 170, 110, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .modal-avatar-large {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            overflow: hidden;
+            position: relative;
+            box-shadow: 
+                0 0 30px rgba(200, 170, 110, 0.3),
+                0 0 60px rgba(200, 170, 110, 0.1),
+                inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-avatar-large::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark), var(--gold));
+            z-index: -1;
+            animation: rotateBorder 4s linear infinite;
+        }
+
+        @keyframes rotateBorder {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .modal-name {
+            font-size: 2.2rem;
+            background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            position: relative;
+            letter-spacing: 2px;
+        }
+
+        .modal-english-name {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        .modal-title-region {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .modal-title {
+            color: var(--blue-light);
+            font-size: 1.1rem;
+        }
+
+        .modal-region {
+            padding: 4px 12px;
+            background: rgba(200, 170, 110, 0.15);
+            border: 1px solid var(--border-gold);
+            border-radius: 15px;
+            font-size: 13px;
+            color: var(--gold);
+        }
+
+        .modal-tags {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .tag-role {
+            background: rgba(3, 151, 171, 0.15);
+            border: 1px solid rgba(3, 151, 171, 0.3);
+            color: var(--blue-light);
+        }
+
+        .tag-race {
+            background: rgba(155, 89, 182, 0.15);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            color: #bb8fce;
+        }
+
+        .modal-body {
+            padding: 30px 40px 40px;
+        }
+
+        .section-title {
+            color: var(--gold);
+            font-size: 1.15rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-gold);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: linear-gradient(180deg, var(--gold), var(--blue-light));
+            border-radius: 2px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 40px;
+            height: 1px;
+            background: var(--gold);
+        }
+
+        .personality-box {
+            padding: 15px 20px;
+            background: rgba(200, 170, 110, 0.05);
+            border-left: 3px solid var(--gold);
+            border-radius: 0 8px 8px 0;
+            line-height: 1.8;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .story-content {
+            line-height: 2;
+            color: rgba(240, 230, 210, 0.9);
+            font-size: 15px;
+            text-align: justify;
+            margin-bottom: 25px;
+        }
+
+        .story-content p {
+            margin-bottom: 15px;
+            text-indent: 2em;
+        }
+
+        .relations-box {
+            padding: 15px 20px;
+            background: rgba(3, 151, 171, 0.05);
+            border-left: 3px solid var(--blue-light);
+            border-radius: 0 8px 8px 0;
+            line-height: 1.8;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .modal-action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-gold);
+            background: rgba(10, 20, 40, 0.6);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold-light);
+            background: rgba(200, 170, 110, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .action-btn-primary {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--blue-dark);
+            border-color: var(--gold);
+            font-weight: bold;
+        }
+
+        .action-btn-primary:hover {
+            box-shadow: 0 4px 20px rgba(200, 170, 110, 0.4);
+            color: var(--blue-dark);
+        }
+
+        /* 关系图模态框 */
+        .relation-modal-content {
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .relation-modal-header {
+            padding: 25px 40px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-gold);
+            background: linear-gradient(180deg, rgba(200, 170, 110, 0.06) 0%, transparent 100%);
+            flex-shrink: 0;
+        }
+
+        .relation-modal-title {
+            font-size: 1.5rem;
+            background: linear-gradient(180deg, var(--gold-light), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            letter-spacing: 3px;
+        }
+
+        .relation-modal-subtitle {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .relation-graph-container {
+            flex: 1;
+            position: relative;
+            min-height: 450px;
+            overflow: hidden;
+            background: 
+                radial-gradient(ellipse at center, rgba(200, 170, 110, 0.03) 0%, transparent 70%);
+        }
+
+        .relation-graph-svg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .relation-center-node {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 5;
+        }
+
+        .relation-center-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            overflow: hidden;
+            margin: 0 auto 8px;
+            box-shadow: 0 0 30px rgba(200, 170, 110, 0.4);
+            background: linear-gradient(135deg, #1a2a4a, #0d1f3c);
+        }
+
+        .relation-center-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .relation-center-name {
+            color: var(--gold-light);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .relation-center-title {
+            color: var(--blue-light);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .relation-node {
+            position: absolute;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 3;
+        }
+
+        .relation-node:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .relation-node-avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            overflow: hidden;
+            margin: 0 auto 5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #1a2a4a, #0d1f3c);
+            transition: all 0.3s ease;
+        }
+
+        .relation-node:hover .relation-node-avatar {
+            box-shadow: 0 0 20px rgba(200, 170, 110, 0.5);
+            border-color: var(--gold-light);
+        }
+
+        .relation-node-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .relation-node-name {
+            color: var(--text-primary);
+            font-size: 11px;
+            white-space: nowrap;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .relation-node-relation {
+            font-size: 10px;
+            margin-top: 2px;
+            white-space: nowrap;
+        }
+
+        .relation-line {
+            stroke-width: 1.5;
+            fill: none;
+            opacity: 0.5;
+        }
+
+        .relation-line.friend { stroke: #2ecc71; }
+        .relation-line.enemy { stroke: #e74c3c; }
+        .relation-line.family { stroke: #e67e22; }
+        .relation-line.mentor { stroke: #9b59b6; }
+        .relation-line.lover { stroke: #e91e63; }
+        .relation-line.ally { stroke: #3498db; }
+        .relation-line.other { stroke: var(--gold); }
+
+        .relation-legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-gold);
+            background: rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.friend { background: #2ecc71; }
+        .legend-dot.enemy { background: #e74c3c; }
+        .legend-dot.family { background: #e67e22; }
+        .legend-dot.mentor { background: #9b59b6; }
+        .legend-dot.lover { background: #e91e63; }
+        .legend-dot.ally { background: #3498db; }
+        .legend-dot.other { background: var(--gold); }
+
+        /* 滚动条 */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--border-gold);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--gold);
+        }
+
+        /* 加载动画 */
+        .loading-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a2a4a 0%, #0d1f3c 100%);
+        }
+
+        .loading-avatar::after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border-gold);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 图片加载失败占位 */
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a2a4a 0%, #0d1f3c 100%);
+            font-size: 2.5rem;
+            color: var(--gold);
+        }
+
+        /* 回到顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--blue-dark);
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(200, 170, 110, 0.3);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(200, 170, 110, 0.5);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 15px;
+                height: 50px;
+            }
+
+            .navbar-logo-text {
+                font-size: 14px;
+                letter-spacing: 1px;
+            }
+
+            .nav-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .nav-btn span {
+                display: none;
+            }
+
+            .header {
+                padding: 70px 15px 20px;
+            }
+
+            .logo-text {
+                font-size: 1.8rem;
+                letter-spacing: 4px;
+            }
+
+            .logo-icon {
+                width: 45px;
+                height: 45px;
+            }
+
+            .logo-icon svg {
+                width: 28px;
+                height: 28px;
+            }
+
+            .subtitle {
+                font-size: 0.85rem;
+                letter-spacing: 4px;
+            }
+
+            .intro-card {
+                padding: 25px 20px;
+            }
+
+            .intro-title {
+                font-size: 1.3rem;
+                letter-spacing: 2px;
+            }
+
+            .intro-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-item {
+                padding: 15px 8px;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .champions-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 12px;
+            }
+
+            .champion-name {
+                font-size: 0.9rem;
+            }
+
+            .champion-title {
+                font-size: 0.7rem;
+            }
+
+            .detail-modal-header {
+                padding: 40px 20px 20px;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .modal-name {
+                font-size: 1.6rem;
+            }
+
+            .modal-avatar-large {
+                width: 100px;
+                height: 100px;
+            }
+
+            .region-filter {
+                gap: 6px;
+            }
+
+            .region-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-height: 92vh;
+            }
+
+            .relation-modal-header {
+                padding: 20px 20px 15px;
+            }
+
+            .relation-graph-container {
+                min-height: 350px;
+            }
+
+            .relation-center-avatar {
+                width: 70px;
+                height: 70px;
+            }
+
+            .relation-node-avatar {
+                width: 45px;
+                height: 45px;
+            }
+
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+            }
+
+            .footer {
+                padding: 30px 15px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .champions-grid {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                gap: 8px;
+            }
+
+            .champion-name {
+                font-size: 0.8rem;
+            }
+
+            .champion-english {
+                display: none;
+            }
+
+            .champion-title {
+                font-size: 0.65rem;
+            }
+
+            .intro-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-action-buttons {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面加载动画 -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-logo"></div>
+        <div class="loader-text">加 载 中</div>
+    </div>
+
+    <!-- 背景层 -->
+    <div class="bg-layer">
+        <div class="bg-image"></div>
+        <div class="bg-gradient"></div>
+        <div class="particles" id="particles"></div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar-logo" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <div class="navbar-logo-icon">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 L85 30 L85 70 L50 90 L15 70 L15 30 Z" stroke="url(#goldGrad2)" stroke-width="3" fill="rgba(10,20,40,0.5)"/>
+                    <path d="M50 35 L60 42 L60 58 L50 65 L40 58 L40 42 Z" fill="url(#goldGrad2)"/>
+                    <defs>
+                        <linearGradient id="goldGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f0e6d2"/>
+                            <stop offset="50%" style="stop-color:#c8aa6e"/>
+                            <stop offset="100%" style="stop-color:#a8884e"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="navbar-logo-text">英雄联盟宇宙</span>
+        </div>
+        <div class="navbar-menu">
+            <button class="nav-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                <span>🏠</span><span>首页</span>
+            </button>
+            <button class="nav-btn" id="navRelationBtn">
+                <span>🕸️</span><span>关系图</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 头部 -->
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 L85 30 L85 70 L50 90 L15 70 L15 30 Z" stroke="url(#goldGrad)" stroke-width="3" fill="rgba(10,20,40,0.5)"/>
+                    <path d="M50 25 L70 37 L70 63 L50 75 L30 63 L30 37 Z" stroke="url(#goldGrad)" stroke-width="2" fill="none"/>
+                    <path d="M50 35 L60 42 L60 58 L50 65 L40 58 L40 42 Z" fill="url(#goldGrad)"/>
+                    <defs>
+                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f0e6d2"/>
+                            <stop offset="50%" style="stop-color:#c8aa6e"/>
+                            <stop offset="100%" style="stop-color:#a8884e"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1 class="logo-text">英雄联盟</h1>
+        </div>
+        <div class="subtitle">英 雄 故 事 大 全</div>
+        
+        <div class="gold-divider">
+            <div class="gold-divider-line"></div>
+            <div class="gold-divider-icon">◆</div>
+            <div class="gold-divider-line"></div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="搜索英雄名称、称号、地区或定位...">
+            </div>
+            <div class="region-filter" id="regionFilter">
+                <!-- 地区按钮由JS生成 -->
+            </div>
+        </div>
+    </header>
+
+    <!-- 前言介绍 -->
+    <section class="intro-section" id="introSection">
+        <div class="intro-card">
+            <div class="corner-decoration corner-tl"></div>
+            <div class="corner-decoration corner-tr"></div>
+            <div class="corner-decoration corner-bl"></div>
+            <div class="corner-decoration corner-br"></div>
+            
+            <div class="intro-header">
+                <h2 class="intro-title">关 于 《 英 雄 联 盟 》 宇 宙</h2>
+                <div class="intro-subtitle">LEAGUE OF LEGENDS UNIVERSE</div>
+            </div>
+            
+            <div class="intro-content">
+                本合集收录《英雄联盟》官方宇宙站点当前在役的全部174位英雄的背景故事，覆盖其身份头衔、所属城邦/阵营、种族、性格特征、核心经历与关键人物关系。资料截至2026年10月。英雄联盟的故事发生在符文之地——一个充满魔法、战争与英雄的奇幻世界。在这片广袤的大陆上，古老的魔法与先进的科技碰撞，崇高的理想与残酷的现实交织。每个英雄都有自己独特的身世、信念与追求，他们的命运交织在一起，构成了这个宏大而深邃的宇宙。从德玛西亚的正义之光，到诺克萨斯的铁血荣耀；从弗雷尔卓德的冰雪荒原，到恕瑞玛的沙漠遗迹——每一片土地都流传着不朽的英雄传说。
+            </div>
+
+            <div class="intro-stats" id="introStats">
+                <div class="stat-item">
+                    <div class="stat-number" id="statChampions">0</div>
+                    <div class="stat-label">位英雄</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statRegions">0</div>
+                    <div class="stat-label">个城邦/地区</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statRaces">0</div>
+                    <div class="stat-label">个种族</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statRoles">0</div>
+                    <div class="stat-label">种定位</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="stats-bar">
+            <span class="stats-text">共收录 <span class="stats-count" id="totalCount">0</span> 位英雄</span>
+            <span class="stats-text">当前显示: <span class="stats-count" id="visibleCount">0</span> 位</span>
+        </div>
+
+        <div class="champions-grid" id="championsGrid">
+            <!-- 英雄卡片由JS生成 -->
+        </div>
+
+        <div class="no-results" id="noResults">
+            <div class="no-results-icon">📜</div>
+            <p>没有找到匹配的英雄</p>
+            <p>试试其他关键词吧</p>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-gold-line"></div>
+            <p>资料来源：<a href="https://yz.lol.qq.com/zh_CN/" target="_blank">英雄联盟宇宙</a> | 英雄联盟英雄故事大全</p>
+            <p style="margin-top: 8px;">本站仅供学习交流使用，英雄故事版权归拳头游戏（Riot Games）所有</p>
+            <div class="footer-copyright">
+                &copy; 2026 英雄联盟英雄故事大全 | League of Legends Champion Stories
+                <br>
+                本网站为非官方粉丝作品，与 Riot Games 无任何关联
+            </div>
+        </div>
+    </footer>
+
+    <!-- 回到顶部按钮 -->
+    <button class="back-to-top" id="backToTop" title="回到顶部">↑</button>
+
+    <!-- 英雄详情模态框 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-corner modal-corner-tl"></div>
+            <div class="modal-corner modal-corner-tr"></div>
+            <div class="modal-corner modal-corner-bl"></div>
+            <div class="modal-corner modal-corner-br"></div>
+            <button class="modal-close" id="modalClose">✕</button>
+            <div class="detail-modal-header">
+                <div class="modal-avatar-large" id="modalAvatar"></div>
+                <div class="modal-name" id="modalName"></div>
+                <div class="modal-english-name" id="modalEnglishName"></div>
+                <div class="modal-title-region">
+                    <span class="modal-title" id="modalTitle"></span>
+                    <span class="modal-region" id="modalRegion"></span>
+                </div>
+                <div class="modal-tags" id="modalTags"></div>
+            </div>
+            <div class="modal-body">
+                <div class="section-title">性格特征</div>
+                <div class="personality-box" id="modalPersonality"></div>
+
+                <div class="section-title">核心经历</div>
+                <div class="story-content" id="modalStory"></div>
+
+                <div class="section-title">人物关系</div>
+                <div class="relations-box" id="modalRelations"></div>
+
+                <div class="modal-action-buttons">
+                    <button class="action-btn action-btn-primary" id="viewRelationBtn">
+                        <span>🕸️</span> 查看关系图
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关系图模态框 -->
+    <div class="modal-overlay" id="relationModalOverlay">
+        <div class="modal-content relation-modal-content">
+            <div class="modal-corner modal-corner-tl"></div>
+            <div class="modal-corner modal-corner-tr"></div>
+            <div class="modal-corner modal-corner-bl"></div>
+            <div class="modal-corner modal-corner-br"></div>
+            <button class="modal-close" id="relationModalClose">✕</button>
+            <div class="relation-modal-header">
+                <div class="relation-modal-title">英 雄 关 系 图</div>
+                <div class="relation-modal-subtitle" id="relationModalSubtitle">以当前英雄为中心的关系网络</div>
+            </div>
+            <div class="relation-graph-container" id="relationGraphContainer">
+                <svg class="relation-graph-svg" id="relationGraphSvg"></svg>
+                <!-- 节点由JS生成 -->
+            </div>
+            <div class="relation-legend">
+                <div class="legend-item"><div class="legend-dot friend"></div>朋友/同伴</div>
+                <div class="legend-item"><div class="legend-dot enemy"></div>敌人/宿敌</div>
+                <div class="legend-item"><div class="legend-dot family"></div>家人/亲属</div>
+                <div class="legend-item"><div class="legend-dot mentor"></div>师徒/上下级</div>
+                <div class="legend-item"><div class="legend-dot lover"></div>恋人/爱慕</div>
+                <div class="legend-item"><div class="legend-dot ally"></div>盟友/同僚</div>
+                <div class="legend-item"><div class="legend-dot other"></div>其他关系</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 数据整合 ====================
+        // 合并 CHAMPIONS 数组和 ALL_CHAMPION_STORIES 对象
+        const storyData = window.ALL_CHAMPION_STORIES || {};
+        
+        // 构建完整英雄列表（以stories-data.js的174位为准）
+        const allChampions = [];
+        const championMap = {};
+
+        // 先从 CHAMPIONS 数组建立 alias 映射
+        const aliasMap = {};
+        if (typeof CHAMPIONS !== 'undefined') {
+            CHAMPIONS.forEach(c => {
+                aliasMap[c.name] = c.alias;
+            });
+        }
+
+        // 从 stories-data.js 构建主列表
+        Object.keys(storyData).forEach(name => {
+            const story = storyData[name];
+            const baseChamp = typeof CHAMPIONS !== 'undefined' 
+                ? CHAMPIONS.find(c => c.name === name) 
+                : null;
+            
+            const champion = {
+                name: name,
+                title: story.title,
+                englishName: story.englishName,
+                alias: baseChamp ? baseChamp.alias : story.englishName.replace(/[^a-zA-Z]/g, ''),
+                region: story.region,
+                race: story.race,
+                personality: story.personality,
+                story: story.story,
+                relations: story.relations,
+                roles: baseChamp ? baseChamp.roles : [],
+                lore: baseChamp ? baseChamp.lore : '',
+                color: baseChamp ? baseChamp.color : '#c8aa6e'
+            };
+            
+            // 修正alias（处理一些特殊情况）
+            if (!aliasMap[name] && story.englishName) {
+                const aliasCandidates = [
+                    story.englishName.replace(/[^a-zA-Z]/g, ''),
+                    story.englishName.replace(/\s+/g, ''),
+                    story.englishName.split(' ').pop()
+                ];
+                champion.alias = aliasCandidates[0];
+            }
+            
+            allChampions.push(champion);
+            championMap[name] = champion;
+        });
+
+        // 如果 stories 数据不足，补充 champions 数据中的英雄
+        if (typeof CHAMPIONS !== 'undefined') {
+            CHAMPIONS.forEach(c => {
+                if (!championMap[c.name]) {
+                    const champion = {
+                        name: c.name,
+                        title: c.title,
+                        englishName: c.alias,
+                        alias: c.alias,
+                        region: c.region,
+                        race: '未知',
+                        personality: '暂无详细资料',
+                        story: c.lore || '暂无详细传记',
+                        relations: '暂无相关资料',
+                        roles: c.roles,
+                        lore: c.lore,
+                        color: c.color
+                    };
+                    allChampions.push(champion);
+                    championMap[c.name] = champion;
+                }
+            });
+        }
+
+        // 地区列表
+        const allRegions = typeof REGIONS !== 'undefined' ? REGIONS : [
+            "全部地区", "艾欧尼亚", "德玛西亚", "诺克萨斯", "皮尔特沃夫", 
+            "祖安", "弗雷尔卓德", "恕瑞玛", "巨神峰", "暗影岛", 
+            "比尔吉沃特", "以绪塔尔", "虚空之地", "班德尔城", "符文之地"
+        ];
+
+        // 计算统计数据
+        function calculateStats() {
+            const regions = new Set();
+            const races = new Set();
+            const roles = new Set();
+
+            allChampions.forEach(c => {
+                if (c.region) regions.add(c.region);
+                if (c.race) {
+                    // 提取主要种族（括号前的部分）
+                    const mainRace = c.race.split(/[（(]/)[0].trim();
+                    races.add(mainRace);
+                }
+                if (c.roles) c.roles.forEach(r => roles.add(r));
+            });
+
+            return {
+                champions: allChampions.length,
+                regions: regions.size,
+                races: races.size,
+                roles: roles.size
+            };
+        }
+
+        // 数字动画
+        function animateNumber(element, target, duration = 1500) {
+            const start = 0;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const current = Math.floor(start + (target - start) * easeProgress);
+                element.textContent = current;
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // ==================== DOM 元素 ====================
+        const championsGrid = document.getElementById('championsGrid');
+        const searchInput = document.getElementById('searchInput');
+        const regionFilter = document.getElementById('regionFilter');
+        const totalCount = document.getElementById('totalCount');
+        const visibleCount = document.getElementById('visibleCount');
+        const noResults = document.getElementById('noResults');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalClose = document.getElementById('modalClose');
+        const modalName = document.getElementById('modalName');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalRegion = document.getElementById('modalRegion');
+        const modalTags = document.getElementById('modalTags');
+        const modalStory = document.getElementById('modalStory');
+        const modalAvatar = document.getElementById('modalAvatar');
+        const modalEnglishName = document.getElementById('modalEnglishName');
+        const modalPersonality = document.getElementById('modalPersonality');
+        const modalRelations = document.getElementById('modalRelations');
+        const viewRelationBtn = document.getElementById('viewRelationBtn');
+        const navbar = document.getElementById('navbar');
+        const backToTop = document.getElementById('backToTop');
+        const navRelationBtn = document.getElementById('navRelationBtn');
+
+        // 关系图模态框
+        const relationModalOverlay = document.getElementById('relationModalOverlay');
+        const relationModalClose = document.getElementById('relationModalClose');
+        const relationGraphContainer = document.getElementById('relationGraphContainer');
+        const relationGraphSvg = document.getElementById('relationGraphSvg');
+        const relationModalSubtitle = document.getElementById('relationModalSubtitle');
+        const pageLoader = document.getElementById('pageLoader');
+
+        // 当前状态
+        let currentRegion = '全部地区';
+        let currentSearch = '';
+        let currentChampion = null;
+        let lastSelectedChampion = null;
+
+        // ==================== 初始化 ====================
+        function init() {
+            initRegionFilter();
+            initParticles();
+            totalCount.textContent = allChampions.length;
+            filterChampions();
+            
+            // 统计数据动画
+            const stats = calculateStats();
+            setTimeout(() => {
+                animateNumber(document.getElementById('statChampions'), stats.champions);
+                animateNumber(document.getElementById('statRegions'), stats.regions);
+                animateNumber(document.getElementById('statRaces'), stats.races);
+                animateNumber(document.getElementById('statRoles'), stats.roles);
+            }, 500);
+
+            // 隐藏加载动画
+            setTimeout(() => {
+                pageLoader.classList.add('hidden');
+            }, 800);
+
+            // 滚动监听
+            window.addEventListener('scroll', handleScroll);
+            
+            // 回到顶部
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // 粒子效果
+        function initParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particle.style.width = (1 + Math.random() * 2) + 'px';
+                particle.style.height = particle.style.width;
+                container.appendChild(particle);
+            }
+        }
+
+        // 滚动处理
+        function handleScroll() {
+            const scrollY = window.scrollY;
+            
+            // 导航栏显示/隐藏
+            if (scrollY > 200) {
+                navbar.classList.add('visible');
+            } else {
+                navbar.classList.remove('visible');
+            }
+
+            // 回到顶部按钮
+            if (scrollY > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+
+            // 卡片渐入动画
+            const cards = document.querySelectorAll('.champion-card:not(.visible)');
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                if (rect.top < window.innerHeight - 100) {
+                    card.classList.add('visible');
+                }
+            });
+        }
+
+        // 初始化地区筛选
+        function initRegionFilter() {
+            allRegions.forEach(region => {
+                const btn = document.createElement('button');
+                btn.className = 'region-btn' + (region === '全部地区' ? ' active' : '');
+                btn.textContent = region;
+                btn.dataset.region = region;
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.region-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentRegion = region;
+                    filterChampions();
+                });
+                regionFilter.appendChild(btn);
+            });
+        }
+
+        // 渲染英雄卡片
+        function renderChampions(championsToRender) {
+            championsGrid.innerHTML = '';
+            
+            if (championsToRender.length === 0) {
+                noResults.classList.add('show');
+            } else {
+                noResults.classList.remove('show');
+            }
+
+            championsToRender.forEach((champion, index) => {
+                const card = document.createElement('div');
+                card.className = 'champion-card';
+                
+                const avatarUrl = getChampionAvatar(champion.alias);
+                
+                card.innerHTML = `
+                    <div class="champion-avatar">
+                        <img src="${avatarUrl}" alt="${champion.name}" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="avatar-placeholder" style="display:none;">${champion.name.charAt(0)}</div>
+                        <span class="region-badge">${champion.region}</span>
+                    </div>
+                    <div class="champion-info">
+                        <div class="champion-name">${champion.name}</div>
+                        <div class="champion-english">${champion.englishName}</div>
+                        <div class="champion-title">${champion.title}</div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openModal(champion));
+                championsGrid.appendChild(card);
+            });
+
+            visibleCount.textContent = championsToRender.length;
+            
+            // 触发首次渐入检查
+            setTimeout(handleScroll, 100);
+        }
+
+        // 筛选英雄
+        function filterChampions() {
+            let filtered = allChampions;
+
+            // 按地区筛选
+            if (currentRegion !== '全部地区') {
+                filtered = filtered.filter(c => c.region === currentRegion);
+            }
+
+            // 按搜索词筛选
+            if (currentSearch.trim()) {
+                const search = currentSearch.toLowerCase().trim();
+                filtered = filtered.filter(c => 
+                    c.name.toLowerCase().includes(search) ||
+                    c.title.toLowerCase().includes(search) ||
+                    c.englishName.toLowerCase().includes(search) ||
+                    c.region.toLowerCase().includes(search) ||
+                    (c.race && c.race.toLowerCase().includes(search)) ||
+                    (c.roles && c.roles.some(r => r.toLowerCase().includes(search)))
+                );
+            }
+
+            renderChampions(filtered);
+        }
+
+        // 打开详情模态框
+        function openModal(champion) {
+            currentChampion = champion;
+            lastSelectedChampion = champion;
+            
+            modalName.textContent = champion.name;
+            modalEnglishName.textContent = champion.englishName;
+            modalTitle.textContent = champion.title;
+            modalRegion.textContent = champion.region;
+            
+            // 头像
+            const avatarUrl = getChampionAvatar(champion.alias);
+            modalAvatar.innerHTML = `<img src="${avatarUrl}" alt="${champion.name}" onerror="this.parentElement.innerHTML='<div class=avatar-placeholder>${champion.name.charAt(0)}</div>'">`;
+            
+            // 标签
+            let tagsHtml = '';
+            if (champion.roles && champion.roles.length > 0) {
+                tagsHtml += champion.roles.map(r => 
+                    `<span class="tag tag-role">${r}</span>`
+                ).join('');
+            }
+            if (champion.race) {
+                const mainRace = champion.race.split(/[（(]/)[0].trim();
+                tagsHtml += `<span class="tag tag-race">${mainRace}</span>`;
+            }
+            modalTags.innerHTML = tagsHtml;
+            
+            // 性格
+            modalPersonality.textContent = champion.personality || '暂无资料';
+            
+            // 故事
+            if (champion.story) {
+                const paragraphs = champion.story.split('\n\n').filter(p => p.trim());
+                modalStory.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+            } else {
+                modalStory.innerHTML = `
+                    <p style="color: var(--text-secondary); text-align: center; padding: 20px; text-indent: 0;">
+                        详细传记正在整理中，敬请期待...
+                    </p>
+                `;
+            }
+            
+            // 关系
+            modalRelations.textContent = champion.relations || '暂无相关资料';
+            
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭详情模态框
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ==================== 关系图功能 ====================
+        
+        // 关系类型关键词映射
+        const relationKeywords = {
+            friend: ['朋友', '同伴', '好友', '挚友', '伙伴', '并肩', '结为', '好友'],
+            enemy: ['敌人', '宿敌', '仇敌', '敌对', '对手', '追捕', '杀死', '复仇', '击败'],
+            family: ['父亲', '母亲', '儿子', '女儿', '兄弟', '姐妹', '丈夫', '妻子', '家人', '亲属', '血脉', '兄妹', '姐弟', '父子', '母女'],
+            mentor: ['师父', '师傅', '导师', '弟子', '徒弟', '学徒', '门下', '上下级', '上司', '下属', '领袖', '跟随', '师从'],
+            lover: ['恋人', '爱慕', '心爱', '钟情', '情侣', '妻子', '丈夫', '结发']
+        };
+
+        // 从relations文本中提取关系和英雄名
+        function extractRelations(champion) {
+            if (!champion.relations) return [];
+            
+            const relationsText = champion.relations;
+            const foundRelations = [];
+            
+            // 遍历所有英雄名，查找在relations中出现的英雄
+            allChampions.forEach(c => {
+                if (c.name === champion.name) return;
+                
+                // 检查英雄名是否出现在关系文本中
+                if (relationsText.includes(c.name)) {
+                    // 判断关系类型
+                    let relationType = 'other';
+                    let relationDesc = '';
+                    
+                    // 在文本中找到包含该英雄名的句子片段
+                    const sentences = relationsText.split(/[；;。]/);
+                    for (const sent of sentences) {
+                        if (sent.includes(c.name)) {
+                            relationDesc = sent.trim();
+                            
+                            // 关键词匹配判断关系类型
+                            for (const [type, keywords] of Object.entries(relationKeywords)) {
+                                if (keywords.some(kw => sent.includes(kw))) {
+                                    relationType = type;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    
+                    // 提取简短的关系描述
+                    let shortDesc = '';
+                    if (relationDesc) {
+                        // 尝试提取关系描述
+                        const patterns = [
+                            /(师父|师傅|导师|弟子|徒弟|父亲|母亲|儿子|女儿|兄弟|姐妹|丈夫|妻子|敌人|宿敌|朋友|同伴|盟友|同[门僚])/g
+                        ];
+                        const matches = relationDesc.match(patterns[0]);
+                        if (matches) {
+                            shortDesc = matches[0];
+                        }
+                    }
+                    
+                    foundRelations.push({
+                        champion: c,
+                        type: relationType,
+                        description: shortDesc || '相关'
+                    });
+                }
+            });
+            
+            // 如果自动提取的关系太少，添加同地区的英雄作为盟友
+            if (foundRelations.length < 3) {
+                const sameRegion = allChampions.filter(c => 
+                    c.region === champion.region && c.name !== champion.name
+                ).slice(0, 6);
+                
+                sameRegion.forEach(c => {
+                    if (!foundRelations.find(r => r.champion.name === c.name)) {
+                        foundRelations.push({
+                            champion: c,
+                            type: 'ally',
+                            description: '同地区'
+                        });
+                    }
+                });
+            }
+            
+            return foundRelations.slice(0, 10); // 最多显示10个
+        }
+
+        // 打开关系图模态框
+        function openRelationModal(champion) {
+            if (!champion) {
+                champion = lastSelectedChampion || allChampions[0];
+            }
+            
+            lastSelectedChampion = champion;
+            relationModalSubtitle.textContent = `${champion.name} · ${champion.title} 的关系网络`;
+            
+            // 先显示模态框，等布局完成后再渲染关系图
+            relationModalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // 等待下一帧确保容器有正确尺寸
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const relations = extractRelations(champion);
+                    renderRelationGraph(champion, relations);
+                });
+            });
+        }
+
+        // 渲染关系图
+        function renderRelationGraph(centerChampion, relations) {
+            const container = relationGraphContainer;
+            const svg = relationGraphSvg;
+            
+            // 清空
+            container.querySelectorAll('.relation-center-node, .relation-node, .relation-empty-tip').forEach(n => n.remove());
+            svg.innerHTML = '';
+            
+            const containerRect = container.getBoundingClientRect();
+            // 兜底尺寸，防止容器还没布局完成
+            const width = containerRect.width || 600;
+            const height = containerRect.height || 450;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svg.setAttribute('width', width);
+            svg.setAttribute('height', height);
+            
+            // 中心节点
+            const centerNode = document.createElement('div');
+            centerNode.className = 'relation-center-node';
+            const avatarUrl = getChampionAvatar(centerChampion.alias);
+            centerNode.innerHTML = `
+                <div class="relation-center-avatar">
+                    <img src="${avatarUrl}" alt="${centerChampion.name}" 
+                         onerror="this.parentElement.innerHTML='<div class=avatar-placeholder>${centerChampion.name.charAt(0)}</div>'">
+                </div>
+                <div class="relation-center-name">${centerChampion.name}</div>
+                <div class="relation-center-title">${centerChampion.title}</div>
+            `;
+            container.appendChild(centerNode);
+            
+            // 周围节点
+            const count = relations.length;
+            if (count === 0) {
+                // 没有关系的提示
+                const noRelation = document.createElement('div');
+                noRelation.className = 'relation-empty-tip';
+                noRelation.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text-secondary);text-align:center;margin-top:100px;';
+                noRelation.innerHTML = '<p style="font-size:14px;">暂无明确的关系数据</p><p style="font-size:12px;margin-top:8px;opacity:0.7;">同地区英雄可在地区筛选中查看</p>';
+                container.appendChild(noRelation);
+                return;
+            }
+            
+            const radius = Math.min(width, height) * 0.35;
+            
+            relations.forEach((rel, index) => {
+                const angle = (index / count) * Math.PI * 2 - Math.PI / 2;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                
+                // 连线
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', centerX);
+                line.setAttribute('y1', centerY);
+                line.setAttribute('x2', x);
+                line.setAttribute('y2', y);
+                line.setAttribute('class', `relation-line ${rel.type}`);
+                svg.appendChild(line);
+                
+                // 节点
+                const node = document.createElement('div');
+                node.className = 'relation-node';
+                node.style.left = (x - 30) + 'px';
+                node.style.top = (y - 40) + 'px';
+                
+                const relAvatarUrl = getChampionAvatar(rel.champion.alias);
+                const typeColors = {
+                    friend: '#2ecc71',
+                    enemy: '#e74c3c',
+                    family: '#e67e22',
+                    mentor: '#9b59b6',
+                    lover: '#e91e63',
+                    ally: '#3498db',
+                    other: 'var(--gold)'
+                };
+                
+                node.innerHTML = `
+                    <div class="relation-node-avatar" style="border-color: ${typeColors[rel.type] || 'var(--gold)'}">
+                        <img src="${relAvatarUrl}" alt="${rel.champion.name}" 
+                             onerror="this.parentElement.innerHTML='<div class=avatar-placeholder style=font-size:1.5rem>${rel.champion.name.charAt(0)}</div>'">
+                    </div>
+                    <div class="relation-node-name">${rel.champion.name}</div>
+                    <div class="relation-node-relation" style="color: ${typeColors[rel.type] || 'var(--gold)'}">${rel.description}</div>
+                `;
+                
+                node.addEventListener('click', () => {
+                    // 点击切换到该英雄的关系图
+                    openRelationModal(rel.champion);
+                    // 同时更新详情模态框
+                    currentChampion = rel.champion;
+                });
+                
+                node.title = `点击查看${rel.champion.name}的关系图`;
+                container.appendChild(node);
+            });
+        }
+
+        // 关闭关系图模态框
+        function closeRelationModal() {
+            relationModalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ==================== 事件监听 ====================
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            filterChampions();
+        });
+
+        modalClose.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeModal();
+            }
+        });
+
+        relationModalClose.addEventListener('click', closeRelationModal);
+        relationModalOverlay.addEventListener('click', (e) => {
+            if (e.target === relationModalOverlay) {
+                closeRelationModal();
+            }
+        });
+
+        // 查看关系图按钮
+        viewRelationBtn.addEventListener('click', () => {
+            if (currentChampion) {
+                closeModal();
+                setTimeout(() => openRelationModal(currentChampion), 200);
+            }
+        });
+
+        // 导航栏关系图按钮
+        navRelationBtn.addEventListener('click', () => {
+            openRelationModal(lastSelectedChampion || allChampions[0]);
+        });
+
+        // ESC键关闭
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (relationModalOverlay.classList.contains('active')) {
+                    closeRelationModal();
+                } else if (modalOverlay.classList.contains('active')) {
+                    closeModal();
+                }
+            }
+        });
+
+        // 窗口大小变化时重新渲染关系图
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (relationModalOverlay.classList.contains('active') && lastSelectedChampion) {
+                    const relations = extractRelations(lastSelectedChampion);
+                    renderRelationGraph(lastSelectedChampion, relations);
+                }
+            }, 200);
+        });
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
