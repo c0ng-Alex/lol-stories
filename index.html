@@ -3096,6 +3096,12 @@
             // 从localStorage读取保存的设置
             const savedBg = localStorage.getItem('lol-bg-index');
             const savedOpacity = localStorage.getItem('lol-bg-opacity');
+            
+            // 背景数据
+            const backgrounds = window.BACKGROUNDS || [
+                { url: 'https://game.gtimg.cn/images/lol/act/img/skin/big86001.jpg', name: '默认' }
+            ];
+            
             // 每次访问随机显示背景（如果没有手动选过的话）
             const hasManualBg = localStorage.getItem('lol-bg-manual') === 'true';
             let currentBgIndex;
@@ -3105,11 +3111,6 @@
                 currentBgIndex = Math.floor(Math.random() * backgrounds.length);
             }
             let currentOpacity = parseInt(savedOpacity) || 40;
-            
-            // 背景数据
-            const backgrounds = window.BACKGROUNDS || [
-                { url: 'https://game.gtimg.cn/images/lol/act/img/skin/big86001.jpg', name: '默认' }
-            ];
             
             // 生成缩略图
             grid.innerHTML = '';
