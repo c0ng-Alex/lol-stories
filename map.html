@@ -107,18 +107,36 @@
             align-items: center;
             justify-content: center;
             background: radial-gradient(ellipse at center, #1a2540 0%, #0a1428 70%, #050a14 100%);
-            padding: 20px;
+            cursor: grab;
+        }
+        
+        .map-container:active {
+            cursor: grabbing;
         }
 
         .map-wrapper {
             position: relative;
-            width: 100%;
-            max-width: 95vw;
-            max-height: 85vh;
+            width: 140%;
+            min-width: 900px;
             aspect-ratio: 2560 / 1440;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: transform 0.1s ease-out;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* iOS旧版兼容：padding-top hack保持16:9比例 */
+        @supports not (aspect-ratio: 1 / 1) {
+            .map-wrapper {
+                height: 0;
+                padding-bottom: 56.25%; /* 1440/2560 = 56.25% */
+            }
+            .map-wrapper > * {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
         }
 
         .world-map {
@@ -127,7 +145,26 @@
             object-fit: contain;
             filter: drop-shadow(0 0 60px rgba(200, 170, 110, 0.15));
             user-select: none;
+            -webkit-user-drag: none;
             pointer-events: none;
+        }
+        
+        /* 拖拽提示 */
+        .map-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 20, 40, 0.9);
+            border: 1px solid var(--border-gold);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 50;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
         }
 
         /* SVG关系连线层 */
@@ -445,9 +482,11 @@
 
         .switch-btn {
             padding: 10px 16px;
-            background: linear-gradient(145deg, rgba(13, 31, 60, 0.95), rgba(10, 20, 40, 0.95));
+            background: rgba(13, 31, 60, 0.95);
+            background: linear-gradient(145deg, rgba(13, 31, 60, 0.98), rgba(10, 20, 40, 0.98));
             border: 1px solid var(--border-gold-strong);
             border-radius: 8px;
+            color: #d4c5a0;
             color: var(--text-secondary);
             cursor: pointer;
             font-size: 13px;
@@ -456,7 +495,10 @@
             align-items: center;
             gap: 8px;
             min-width: 130px;
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .switch-btn:hover {
@@ -906,26 +948,86 @@
         /* 提示文字 */
         .map-tip {
             position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(10, 20, 40, 0.9);
+            bottom: 30px;
+            left: 30px;
+            background: rgba(10, 20, 40, 0.92);
             border: 1px solid var(--border-gold);
-            border-radius: 20px;
-            padding: 8px 20px;
+            border-radius: 10px;
+            padding: 10px 16px;
             font-size: 13px;
             color: var(--text-secondary);
             z-index: 40;
-            animation: tipFade 3s ease-in-out infinite;
+            max-width: 260px;
+            line-height: 1.5;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s, transform 0.3s;
         }
 
-        @keyframes tipFade {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
+        .map-tip .tip-close {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.6;
+            padding: 2px 6px;
+        }
+
+        .map-tip .tip-close:hover {
+            opacity: 1;
+            color: var(--gold);
+        }
+
+        .map-tip.hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
         }
 
         /* 响应式 */
         @media (max-width: 768px) {
+            .map-header {
+                padding: 0 12px;
+                height: 56px;
+            }
+            .back-btn {
+                padding: 6px 10px;
+                font-size: 0;
+                width: 36px;
+                height: 36px;
+                justify-content: center;
+            }
+            .back-btn::before {
+                content: '←';
+                font-size: 16px;
+            }
+            .map-title {
+                font-size: 16px;
+                letter-spacing: 2px;
+            }
+            .map-title span {
+                display: none;
+            }
+            .view-switcher {
+                gap: 6px;
+            }
+            .switch-btn {
+                padding: 6px 8px;
+                font-size: 11px;
+                min-width: auto;
+            }
+            .switch-btn span:nth-child(2) {
+                display: none;
+            }
+            .switch-btn .switch-icon {
+                font-size: 16px;
+                margin-right: 0;
+            }
             .region-panel {
                 width: 100%;
                 right: -100%;
@@ -941,6 +1043,10 @@
             }
             .champions-grid {
                 grid-template-columns: repeat(3, 1fr);
+            }
+            .map-wrapper {
+                width: 180%;
+                min-width: 600px;
             }
         }
     </style>
@@ -958,7 +1064,11 @@
     </div>
 
     <!-- 提示 -->
-    <div class="map-tip">🗺️ 点击地图上的标记查看各地区英雄</div>
+    <div class="map-tip" id="mapTip">
+        <button class="tip-close" onclick="document.getElementById('mapTip').classList.add('hidden')">✕</button>
+        🗺️ 点击地图上的标记查看各地区英雄<br>
+        <span style="font-size: 11px; opacity: 0.7;">🖐️ 可拖动地图查看更多</span>
+    </div>
 
     <!-- 视图切换按钮 -->
     <div class="view-switch">
@@ -1582,6 +1692,137 @@
                 closeHeroModal();
             }
         });
+
+        // 地图比例自适应（兼容不支持aspect-ratio的浏览器，如旧版iOS）
+        function updateMapSize() {
+            const wrapper = document.getElementById('mapWrapper');
+            if (!wrapper) return;
+            // 检测是否支持aspect-ratio
+            const supportsAspectRatio = CSS.supports && CSS.supports('aspect-ratio', '1 / 1');
+            if (supportsAspectRatio) return;
+            
+            const container = document.querySelector('.map-container');
+            const maxW = container.clientWidth * 0.95;
+            const maxH = container.clientHeight * 0.85;
+            const ratio = 2560 / 1440;
+            
+            let width = maxW;
+            let height = width / ratio;
+            if (height > maxH) {
+                height = maxH;
+                width = height * ratio;
+            }
+            
+            wrapper.style.width = width + 'px';
+            wrapper.style.height = height + 'px';
+            wrapper.style.paddingBottom = '0';
+        }
+        
+        updateMapSize();
+        window.addEventListener('resize', updateMapSize);
+        
+        // ==================== 地图拖拽功能 ====================
+        (function() {
+            const container = document.getElementById('mapContainer');
+            const wrapper = document.getElementById('mapWrapper');
+            if (!container || !wrapper) return;
+            
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let translateX = 0;
+            let translateY = 0;
+            let startTranslateX = 0;
+            let startTranslateY = 0;
+            
+            // 边界限制
+            function clampTranslate() {
+                const containerRect = container.getBoundingClientRect();
+                const wrapperRect = wrapper.getBoundingClientRect();
+                
+                const maxX = (wrapperRect.width - containerRect.width) / 2;
+                const maxY = (wrapperRect.height - containerRect.height) / 2;
+                
+                translateX = Math.max(-maxX, Math.min(maxX, translateX));
+                translateY = Math.max(-maxY, Math.min(maxY, translateY));
+            }
+            
+            function updateTransform() {
+                wrapper.style.transform = `translate(${translateX}px, ${translateY}px)`;
+            }
+            
+            // 鼠标拖拽
+            container.addEventListener('mousedown', (e) => {
+                // 如果点到了标记或面板，不拖拽
+                if (e.target.closest('.region-marker') || e.target.closest('.region-panel') || 
+                    e.target.closest('.view-switcher') || e.target.closest('.back-btn')) return;
+                
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startTranslateX = translateX;
+                startTranslateY = translateY;
+                container.style.cursor = 'grabbing';
+            });
+            
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                translateX = startTranslateX + dx;
+                translateY = startTranslateY + dy;
+                clampTranslate();
+                updateTransform();
+            });
+            
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    container.style.cursor = 'grab';
+                }
+            });
+            
+            // 触摸拖拽
+            container.addEventListener('touchstart', (e) => {
+                if (e.target.closest('.region-marker') || e.target.closest('.region-panel') ||
+                    e.target.closest('.view-switcher') || e.target.closest('.back-btn')) return;
+                if (e.touches.length !== 1) return;
+                
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startTranslateX = translateX;
+                startTranslateY = translateY;
+            }, { passive: true });
+            
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length !== 1) return;
+                e.preventDefault();
+                
+                const dx = e.touches[0].clientX - startX;
+                const dy = e.touches[0].clientY - startY;
+                translateX = startTranslateX + dx;
+                translateY = startTranslateY + dy;
+                clampTranslate();
+                updateTransform();
+            }, { passive: false });
+            
+            container.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+            
+            // 显示拖拽提示，3秒后消失
+            const hint = document.createElement('div');
+            hint.className = 'map-hint';
+            hint.innerHTML = '🖐️ 拖动地图查看更多区域';
+            container.appendChild(hint);
+            setTimeout(() => {
+                hint.style.opacity = '0';
+                hint.style.transition = 'opacity 0.5s';
+                setTimeout(() => hint.remove(), 500);
+            }, 3000);
+        })();
     </script>
 </body>
 </html>

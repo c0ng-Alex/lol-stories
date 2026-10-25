@@ -128,9 +128,15 @@
             background-image: url('https://game.gtimg.cn/images/lol/act/img/skin/big86001.jpg');
             background-size: cover;
             background-position: center top;
+            background-repeat: no-repeat;
             opacity: 0.35;
             filter: blur(0px);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
             transition: background-image 0.8s ease-in-out, opacity 0.8s ease-in-out;
+            will-change: background-image;
         }
 
         .bg-gradient {
@@ -248,40 +254,59 @@
 
         .nav-btn {
             padding: 8px 18px;
-            background: rgba(10, 20, 40, 0.6);
-            border: 1px solid var(--border-gold);
+            background: #121e33 !important;
+            background-color: #121e33 !important;
+            border: 1px solid #c8aa6e !important;
             border-radius: 20px;
-            color: #d4c5a0;
-            color: var(--text-secondary);
+            color: #d4c5a0 !important;
+            color: #e8d9b8 !important;
             cursor: pointer;
             font-size: 13px;
+            font-weight: 500;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 6px;
-            -webkit-appearance: none;
-            appearance: none;
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            -webkit-text-fill-color: #e8d9b8;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            line-height: 1;
+        }
+
+        .nav-btn span {
+            color: #e8d9b8 !important;
+            -webkit-text-fill-color: #e8d9b8;
+            display: inline;
+            position: relative;
+            z-index: 1;
         }
 
         .nav-btn:hover {
-            border-color: var(--gold);
-            color: var(--gold-light);
-            background: rgba(200, 170, 110, 0.1);
+            border-color: #f0d89a !important;
+            color: #f0d89a !important;
+            -webkit-text-fill-color: #f0d89a;
+            background: #1a2a44 !important;
             transform: translateY(-1px);
         }
 
         .nav-btn.active {
-            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-            color: #0a1428;
-            color: var(--blue-dark);
-            border-color: var(--gold);
+            background: linear-gradient(135deg, #c8aa6e, #a88842) !important;
+            color: #0a1428 !important;
+            -webkit-text-fill-color: #0a1428;
+            border-color: #c8aa6e !important;
             font-weight: bold;
+        }
+
+        .nav-btn.active span {
+            color: #0a1428 !important;
+            -webkit-text-fill-color: #0a1428;
         }
 
         /* 背景切换器 */
         .bg-switcher-btn {
             position: fixed;
-            right: 24px;
+            left: 24px;
             bottom: 24px;
             width: 56px;
             height: 56px;
@@ -2178,12 +2203,20 @@
             }
 
             .nav-btn {
-                padding: 6px 12px;
+                padding: 6px 10px;
                 font-size: 12px;
+                width: 36px;
+                height: 36px;
+                justify-content: center;
             }
 
-            .nav-btn span {
+            .nav-btn span:nth-child(2) {
                 display: none;
+            }
+            
+            .nav-btn span:first-child {
+                display: inline !important;
+                font-size: 16px;
             }
 
             .header {
@@ -2264,11 +2297,44 @@
 
             .region-filter {
                 gap: 6px;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
             }
 
             .region-btn {
                 padding: 6px 12px;
                 font-size: 12px;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            
+            .search-box {
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .search-box input {
+                font-size: 14px;
+            }
+            
+            .filter-section {
+                padding: 15px 15px 10px;
+            }
+            
+            .filter-title {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+            
+            .champions-section {
+                padding: 15px;
+            }
+            
+            .section-header {
+                margin-bottom: 15px;
+                font-size: 0.85rem;
             }
 
             .modal-content {
@@ -2299,6 +2365,37 @@
                 right: 20px;
                 width: 40px;
                 height: 40px;
+            }
+            
+            .bg-switcher-btn {
+                left: 16px;
+                bottom: 20px;
+                width: 46px;
+                height: 46px;
+            }
+            
+            .bg-switcher-panel {
+                left: 10px;
+                right: 10px;
+                bottom: 70px;
+                width: auto;
+                max-height: 60vh;
+            }
+            
+            .modal-voice-player {
+                padding: 12px;
+            }
+            
+            .mvp-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            
+            .mvp-btn.mvp-play-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
             }
 
             .footer {
@@ -2527,9 +2624,14 @@
                     </div>
                     <div class="mvp-footer">
                         <span class="mvp-index" id="voiceIndex">0 / 0</span>
-                        <button class="mvp-shuffle" id="voiceShuffleBtn" onclick="toggleShuffle()" title="随机播放">
-                            🔀 随机
-                        </button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="mvp-shuffle" id="voiceLoopBtn" onclick="toggleLoop()" title="循环播放">
+                                🔁 循环
+                            </button>
+                            <button class="mvp-shuffle" id="voiceShuffleBtn" onclick="toggleShuffle()" title="随机播放">
+                                🔀 随机
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2994,7 +3096,14 @@
             // 从localStorage读取保存的设置
             const savedBg = localStorage.getItem('lol-bg-index');
             const savedOpacity = localStorage.getItem('lol-bg-opacity');
-            let currentBgIndex = parseInt(savedBg) || 0;
+            // 每次访问随机显示背景（如果没有手动选过的话）
+            const hasManualBg = localStorage.getItem('lol-bg-manual') === 'true';
+            let currentBgIndex;
+            if (savedBg !== null && hasManualBg) {
+                currentBgIndex = parseInt(savedBg) || 0;
+            } else {
+                currentBgIndex = Math.floor(Math.random() * backgrounds.length);
+            }
             let currentOpacity = parseInt(savedOpacity) || 40;
             
             // 背景数据
@@ -3039,6 +3148,7 @@
                 
                 // 保存设置
                 localStorage.setItem('lol-bg-index', index);
+                localStorage.setItem('lol-bg-manual', 'true');
             }
             
             // 透明度调节
@@ -3355,6 +3465,7 @@
         let currentHeroVoices = null;
         let currentVoiceIndex = 0;
         let isShuffle = false;
+        let isLoop = true; // 默认开启循环播放
         let voiceAudio = null; // 真实音频对象
         let voicePlaying = false;
 
@@ -3367,6 +3478,28 @@
 
             currentHeroVoices = voices;
             currentVoiceIndex = 0;
+            
+            // 初始化循环按钮状态
+            const loopBtn = document.getElementById('voiceLoopBtn');
+            if (loopBtn) {
+                if (isLoop) {
+                    loopBtn.classList.add('active');
+                    loopBtn.innerHTML = '🔁 循环中';
+                } else {
+                    loopBtn.classList.remove('active');
+                    loopBtn.innerHTML = '🔁 循环';
+                }
+            }
+            const shuffleBtn = document.getElementById('voiceShuffleBtn');
+            if (shuffleBtn) {
+                if (isShuffle) {
+                    shuffleBtn.classList.add('active');
+                    shuffleBtn.innerHTML = '🔀 随机中';
+                } else {
+                    shuffleBtn.classList.remove('active');
+                    shuffleBtn.innerHTML = '🔀 随机';
+                }
+            }
 
             // 播放第一条
             playVoice(0);
@@ -3542,7 +3675,16 @@
                 newIndex = Math.floor(Math.random() * currentHeroVoices.lines.length);
             } else {
                 newIndex = currentVoiceIndex + 1;
-                if (newIndex >= currentHeroVoices.lines.length) newIndex = 0;
+                if (newIndex >= currentHeroVoices.lines.length) {
+                    if (isLoop) {
+                        newIndex = 0; // 循环播放，回到第一条
+                    } else {
+                        // 不循环，停止播放
+                        voicePlaying = false;
+                        document.getElementById('voicePlayBtn').textContent = '▶';
+                        return;
+                    }
+                }
             }
             playVoice(newIndex);
         }
@@ -3557,6 +3699,19 @@
             
             voiceAudio.currentTime = percent * voiceAudio.duration;
             document.getElementById('voiceProgressBar').style.width = (percent * 100) + '%';
+        }
+
+        // 切换循环播放
+        function toggleLoop() {
+            isLoop = !isLoop;
+            const btn = document.getElementById('voiceLoopBtn');
+            if (isLoop) {
+                btn.classList.add('active');
+                btn.innerHTML = '🔁 循环中';
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '🔁 循环';
+            }
         }
 
         // 切换随机播放
@@ -3637,7 +3792,7 @@
                 <span>背景可见度</span>
                 <span id="bgOpacityValue">35%</span>
             </div>
-            <input type="range" class="bg-opacity-input" id="bgOpacitySlider" min="10" max="90" value="35">
+            <input type="range" class="bg-opacity-input" id="bgOpacitySlider" min="10" max="100" value="35">
         </div>
     </div>
 
