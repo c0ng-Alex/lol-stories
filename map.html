@@ -99,9 +99,13 @@
 
         /* 地图容器 */
         .map-container {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100vw;
-            height: 100vh;
-            position: relative;
+            height: calc(100vh - 60px);
             overflow: hidden;
             display: flex;
             align-items: flex-start;
@@ -956,6 +960,10 @@
             .map-title span {
                 display: none;
             }
+            .map-container {
+                top: 56px;
+                height: calc(100vh - 56px);
+            }
             .view-switcher {
                 gap: 6px;
             }
@@ -974,7 +982,7 @@
             .region-panel {
                 width: 100%;
                 right: -100%;
-                top: 60px;
+                top: 56px;
                 bottom: 0;
                 border-radius: 0;
             }
