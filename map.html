@@ -108,6 +108,10 @@
             justify-content: flex-start;
             background: radial-gradient(ellipse at center, #1a2540 0%, #0a1428 70%, #050a14 100%);
             cursor: grab;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         .map-container:active {
@@ -1734,6 +1738,11 @@
                 // 让地图居中：地图比视口大的部分，各分一半在视口外
                 translateX = -(wrapperWidth - containerWidth) / 2;
                 translateY = -(wrapperHeight - containerHeight) / 2;
+                // 移动端左边多留30px安全距离，避开iOS左边缘返回手势
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile && translateX < -30) {
+                    translateX += 30; // 地图向右偏移30px，左边留出安全区
+                }
                 applyTransform();
             }
             centerMap();
