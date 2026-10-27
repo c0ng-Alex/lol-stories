@@ -1667,12 +1667,12 @@
                 wrapper.style.paddingBottom = '0';
             }
             
-            // 通知拖拽模块更新缓存并重新居中
+            // 通知拖拽模块更新缓存
             if (window.__mapDragUpdateCache) {
                 window.__mapDragUpdateCache();
             }
-            if (window.__centerMap) {
-                window.__centerMap();
+            if (window.__resetMapPosition) {
+                window.__resetMapPosition();
             }
         }
         
@@ -1715,53 +1715,54 @@
             let containerHeight = 0;
             let wrapperWidth = 0;
             let wrapperHeight = 0;
-            let maxX = 0;
-            let maxY = 0;
+            let minTranslateX = 0; // 最左：地图右边对齐视口右边（负值）
+            let maxTranslateX = 0; // 最右：地图左边对齐视口左边（0或正值）
+            let minTranslateY = 0;
+            let maxTranslateY = 0;
             
             function updateCache() {
                 containerWidth = container.clientWidth;
                 containerHeight = container.clientHeight;
                 wrapperWidth = wrapper.offsetWidth;
                 wrapperHeight = wrapper.offsetHeight;
-                maxX = Math.max(0, (wrapperWidth - containerWidth) / 2);
-                maxY = Math.max(0, (wrapperHeight - containerHeight) / 2);
+                // translateX范围：地图可以从最左拖到最右
+                // 最右（maxTranslateX）：地图左边缘对齐视口左边 → translateX = 0
+                // 最左（minTranslateX）：地图右边缘对齐视口右边 → translateX = containerWidth - wrapperWidth（负值）
+                maxTranslateX = 0;
+                minTranslateX = containerWidth - wrapperWidth;
+                maxTranslateY = 0;
+                minTranslateY = containerHeight - wrapperHeight;
             }
             
             // 页面加载和窗口变化时更新缓存
             updateCache();
             
             // 初始居中显示（地图中心对准视口中心）
-            function centerMap() {
+            function resetMapPosition() {
                 updateCache();
+                // 初始位置：地图左上角对齐视口左上角
+                // 这样用户从最左边开始看，向右/向下拖动可以看到全部内容
                 translateX = 0;
                 translateY = 0;
-                // 让地图居中：地图比视口大的部分，各分一半在视口外
-                translateX = -(wrapperWidth - containerWidth) / 2;
-                translateY = -(wrapperHeight - containerHeight) / 2;
-                // 移动端左边多留30px安全距离，避开iOS左边缘返回手势
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                if (isMobile && translateX < -30) {
-                    translateX += 30; // 地图向右偏移30px，左边留出安全区
-                }
                 applyTransform();
             }
-            centerMap();
+            resetMapPosition();
             
             let resizeTimer = null;
             window.addEventListener('resize', () => {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
                     updateCache();
-                    // 窗口变化后重新居中
-                    translateX = -(wrapperWidth - containerWidth) / 2;
-                    translateY = -(wrapperHeight - containerHeight) / 2;
+                    // 窗口变化后把位置限制在边界内
+                    translateX = clamp(translateX, minTranslateX, maxTranslateX);
+                    translateY = clamp(translateY, minTranslateY, maxTranslateY);
                     applyTransform();
                 }, 100);
             });
             
             // 暴露给外部调用（横竖屏切换时用）
             window.__mapDragUpdateCache = updateCache;
-            window.__centerMap = centerMap;
+            window.__resetMapPosition = resetMapPosition;
             
             // 用 translate3d 启用GPU加速 + will-change
             wrapper.style.willChange = 'transform';
@@ -1779,8 +1780,8 @@
                 if (isAnimating) return;
                 isAnimating = true;
                 rafId = requestAnimationFrame(() => {
-                    translateX = clamp(translateX, -maxX, maxX);
-                    translateY = clamp(translateY, -maxY, maxY);
+                    translateX = clamp(translateX, minTranslateX, maxTranslateX);
+                    translateY = clamp(translateY, minTranslateY, maxTranslateY);
                     applyTransform();
                     isAnimating = false;
                 });
@@ -1802,10 +1803,10 @@
                     translateY += vy;
                     
                     // 碰到边界反弹
-                    if (translateX < -maxX) { translateX = -maxX; vx = -vx * 0.3; }
-                    if (translateX > maxX) { translateX = maxX; vx = -vx * 0.3; }
-                    if (translateY < -maxY) { translateY = -maxY; vy = -vy * 0.3; }
-                    if (translateY > maxY) { translateY = maxY; vy = -vy * 0.3; }
+                    if (translateX < minTranslateX) { translateX = minTranslateX; vx = -vx * 0.3; }
+                    if (translateX > maxTranslateX) { translateX = maxTranslateX; vx = -vx * 0.3; }
+                    if (translateY < minTranslateY) { translateY = minTranslateY; vy = -vy * 0.3; }
+                    if (translateY > maxTranslateY) { translateY = maxTranslateY; vy = -vy * 0.3; }
                     
                     applyTransform();
                     
