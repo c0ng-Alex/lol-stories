@@ -3245,6 +3245,17 @@
             }
             let currentOpacity = parseInt(savedOpacity) || 40;
             
+            // 应用初始背景（随机或保存的）
+            const initialBg = backgrounds[currentBgIndex];
+            if (initialBg && bgImage) {
+                // 预加载后应用
+                const img = new Image();
+                img.onload = () => {
+                    bgImage.style.backgroundImage = `url('${initialBg.url}')`;
+                };
+                img.src = initialBg.url;
+            }
+            
             // 生成缩略图
             grid.innerHTML = '';
             backgrounds.forEach((bg, index) => {
@@ -3651,41 +3662,40 @@
             document.getElementById('voiceIndex').textContent = `${index + 1} / ${currentHeroVoices.lines.length}`;
             document.getElementById('voiceProgressBar').style.width = '0%';
             
-            // 停止之前的音频
-            if (voiceAudio) {
-                voiceAudio.pause();
-                voiceAudio = null;
-            }
-            
-            // 创建新音频
             if (line.audio) {
-                voiceAudio = new Audio(line.audio);
+                // 复用同一个Audio对象，避免每次新建导致的自动播放被阻止
+                if (!voiceAudio || !(voiceAudio instanceof Audio)) {
+                    // 首次创建或之前是文字模式，新建Audio
+                    if (voiceAudio && voiceAudio.pause) voiceAudio.pause();
+                    voiceAudio = new Audio();
+                    
+                    // 播放进度更新（只绑定一次）
+                    voiceAudio.addEventListener('timeupdate', () => {
+                        if (voiceAudio && voiceAudio.duration) {
+                            const progress = (voiceAudio.currentTime / voiceAudio.duration) * 100;
+                            document.getElementById('voiceProgressBar').style.width = progress + '%';
+                        }
+                    });
+                    
+                    // 播放结束自动下一条（只绑定一次）
+                    voiceAudio.addEventListener('ended', () => {
+                        nextVoice();
+                    });
+                    
+                    // 播放出错时，用文字模式继续
+                    voiceAudio.addEventListener('error', () => {
+                        console.log('语音加载失败，使用文字模式');
+                        if (currentHeroVoices) {
+                            const curLine = currentHeroVoices.lines[currentVoiceIndex];
+                            if (curLine) playVoiceTextMode(curLine);
+                        }
+                    });
+                }
                 
-                // 加载元数据后更新进度
-                voiceAudio.addEventListener('loadedmetadata', () => {
-                    // 进度条初始0%
-                });
+                // 切换音频源并播放
+                voiceAudio.src = line.audio;
+                voiceAudio.load();
                 
-                // 播放进度更新
-                voiceAudio.addEventListener('timeupdate', () => {
-                    if (voiceAudio && voiceAudio.duration) {
-                        const progress = (voiceAudio.currentTime / voiceAudio.duration) * 100;
-                        document.getElementById('voiceProgressBar').style.width = progress + '%';
-                    }
-                });
-                
-                // 播放结束自动下一条
-                voiceAudio.addEventListener('ended', () => {
-                    nextVoice();
-                });
-                
-                // 播放出错时，用文字模式继续
-                voiceAudio.addEventListener('error', () => {
-                    console.log('语音加载失败，使用文字模式');
-                    playVoiceTextMode(line);
-                });
-                
-                // 开始播放
                 const playPromise = voiceAudio.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
@@ -3696,6 +3706,9 @@
                         voicePlaying = false;
                         document.getElementById('voicePlayBtn').textContent = '▶';
                     });
+                } else {
+                    voicePlaying = true;
+                    document.getElementById('voicePlayBtn').textContent = '⏸';
                 }
             } else {
                 // 没有音频文件，用文字模拟模式
