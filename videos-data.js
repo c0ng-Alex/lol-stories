@@ -1,13 +1,18 @@
 /**
  * 英雄视频故事数据
- * 每个英雄可以有多个视频，支持B站、YouTube等平台
+ * 每个英雄可以有多个视频，支持B站、微信视频号等平台
+ *
+ * 平台支持说明：
+ *   - B站：直接跳转bilibili.com视频页面
+ *   - 微信视频号：需要先获取视频的分享链接（在视频号内点分享→复制链接）
+ *
  * 格式说明：
  *   name: 英雄名称
  *   videos: [
  *     {
  *       title: 视频标题,
  *       author: UP主/作者,
- *       platform: 平台名称（如 B站 / YouTube）,
+ *       platform: 平台名称（如 B站 / 微信视频号）,
  *       url: 视频链接,
  *       cover: 封面图（可选）,
  *       duration: 时长（可选，如 '12:34'）,
@@ -20,20 +25,33 @@ const CHAMPION_VIDEOS = {
         name: '亚索',
         videos: [
             {
-                title: '【英雄联盟】亚索 背景故事',
+                title: '【英雄联盟】乘风归 官方动画短片',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1Us411o7mF/',
-                duration: '05:20',
-                desc: '官方英雄传记动画'
+                url: 'https://www.bilibili.com/video/BV1p5411e7F6/',
+                duration: '09:30',
+                desc: '亚索与永恩的宿命对决，灵魂莲华官方CG动画'
             },
             {
-                title: '亚索全语音与背景深度解读',
-                author: 'LOL英雄故事',
+                title: '英雄联盟宇宙：城邦传说 - 艾欧尼亚',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://search.bilibili.com/all?keyword=亚索背景故事',
-                duration: '15:30',
-                desc: '深度解析亚索的人生悲剧与赎罪之路'
+                url: 'https://www.bilibili.com/video/BV1k64y1T7ff/',
+                duration: '06:45',
+                desc: '艾欧尼亚地区故事，含亚索、阿卡丽等英雄'
+            }
+        ]
+    },
+    '永恩': {
+        name: '永恩',
+        videos: [
+            {
+                title: '【英雄联盟】乘风归 官方动画短片',
+                author: '英雄联盟',
+                platform: 'B站',
+                url: 'https://www.bilibili.com/video/BV1p5411e7F6/',
+                duration: '09:30',
+                desc: '封魔剑魂永恩的诞生，与弟弟亚索的重逢'
             }
         ]
     },
@@ -41,20 +59,12 @@ const CHAMPION_VIDEOS = {
         name: '金克丝',
         videos: [
             {
-                title: '【英雄联盟：双城之战】金克丝/爆爆人物志',
-                author: '英雄联盟官方',
+                title: '英雄联盟宇宙：城邦传说 - 皮尔特沃夫与祖安',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/bangumi/play/ss39431/',
-                duration: '全9集',
-                desc: '《双城之战》动画完整讲述金克丝的故事'
-            },
-            {
-                title: '金克丝 Get Jinxed 官方MV',
-                author: '英雄联盟',
-                platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1xx411Z7Hd/',
-                duration: '02:45',
-                desc: '金克丝出道主题曲MV'
+                url: 'https://www.bilibili.com/video/BV1Cf4y1U7WJ/',
+                duration: '05:30',
+                desc: '皮城与祖安的双城故事，金克丝、蔚登场'
             }
         ]
     },
@@ -62,12 +72,12 @@ const CHAMPION_VIDEOS = {
         name: '蔚',
         videos: [
             {
-                title: '【英雄联盟：双城之战】蔚人物志',
-                author: '英雄联盟官方',
+                title: '英雄联盟宇宙：城邦传说 - 皮尔特沃夫与祖安',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/bangumi/play/ss39431/',
-                duration: '全9集',
-                desc: '《双城之战》中蔚的成长与蜕变'
+                url: 'https://www.bilibili.com/video/BV1Cf4y1U7WJ/',
+                duration: '05:30',
+                desc: '皮城执法官蔚的故事，双城冲突的开端'
             }
         ]
     },
@@ -75,12 +85,12 @@ const CHAMPION_VIDEOS = {
         name: '凯特琳',
         videos: [
             {
-                title: '【英雄联盟：双城之战】凯特琳人物解读',
-                author: '英雄联盟官方',
+                title: '英雄联盟宇宙：城邦传说 - 皮尔特沃夫与祖安',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/bangumi/play/ss39431/',
-                duration: '全9集',
-                desc: '皮城女警的正义之路'
+                url: 'https://www.bilibili.com/video/BV1Cf4y1U7WJ/',
+                duration: '05:30',
+                desc: '皮城女警凯特琳登场，追查祖安迷案'
             }
         ]
     },
@@ -88,12 +98,12 @@ const CHAMPION_VIDEOS = {
         name: '杰斯',
         videos: [
             {
-                title: '【英雄联盟：双城之战】杰斯人物志',
-                author: '英雄联盟官方',
+                title: '英雄联盟宇宙：城邦传说 - 皮尔特沃夫与祖安',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/bangumi/play/ss39431/',
-                duration: '全9集',
-                desc: '从发明家到议员，杰斯的抉择与挣扎'
+                url: 'https://www.bilibili.com/video/BV1Cf4y1U7WJ/',
+                duration: '05:30',
+                desc: '未来守护者杰斯，海克斯科技的诞生'
             }
         ]
     },
@@ -101,12 +111,12 @@ const CHAMPION_VIDEOS = {
         name: '维克托',
         videos: [
             {
-                title: '【英雄联盟：双城之战】维克托人物解读',
-                author: '英雄联盟官方',
+                title: '英雄联盟宇宙：城邦传说 - 皮尔特沃夫与祖安',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/bangumi/play/ss39431/',
-                duration: '全9集',
-                desc: '光荣进化的理想与现实'
+                url: 'https://www.bilibili.com/video/BV1Cf4y1U7WJ/',
+                duration: '05:30',
+                desc: '机械先驱维克托，光荣进化的理想'
             }
         ]
     },
@@ -114,20 +124,12 @@ const CHAMPION_VIDEOS = {
         name: '艾克',
         videos: [
             {
-                title: '艾克 秒 官方CG动画',
-                author: '英雄联盟',
+                title: '英雄联盟宇宙：城邦传说 - 皮尔特沃夫与祖安',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1Gx411k7QH/',
-                duration: '03:30',
-                desc: '艾克大招穿越时间的震撼动画'
-            },
-            {
-                title: '【英雄联盟：双城之战】艾克登场',
-                author: '英雄联盟官方',
-                platform: 'B站',
-                url: 'https://www.bilibili.com/bangumi/play/ss39431/',
-                duration: '全9集',
-                desc: '野火帮首领的成长故事'
+                url: 'https://www.bilibili.com/video/BV1Cf4y1U7WJ/',
+                duration: '05:30',
+                desc: '时间刺客艾克，祖安的天才少年'
             }
         ]
     },
@@ -135,12 +137,25 @@ const CHAMPION_VIDEOS = {
         name: '阿狸',
         videos: [
             {
-                title: '阿狸 别离开我 官方CG',
-                author: '英雄联盟',
+                title: '英雄联盟宇宙：城邦传说 - 艾欧尼亚',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1Ds411o7mF/',
-                duration: '04:00',
-                desc: '阿狸追寻自我记忆的旅程'
+                url: 'https://www.bilibili.com/video/BV1k64y1T7ff/',
+                duration: '06:45',
+                desc: '艾欧尼亚地区故事，九尾妖狐阿狸的故乡'
+            }
+        ]
+    },
+    '阿卡丽': {
+        name: '阿卡丽',
+        videos: [
+            {
+                title: '英雄联盟宇宙：城邦传说 - 艾欧尼亚',
+                author: '英雄联盟宇宙',
+                platform: 'B站',
+                url: 'https://www.bilibili.com/video/BV1k64y1T7ff/',
+                duration: '06:45',
+                desc: '离群之刺阿卡丽登场，艾欧尼亚的暗影'
             }
         ]
     },
@@ -148,10 +163,10 @@ const CHAMPION_VIDEOS = {
         name: '瑞兹',
         videos: [
             {
-                title: '瑞兹 力量的召唤 官方CG',
+                title: '瑞兹：力量的召唤 官方CG',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1cx411Z7qR/',
+                url: 'https://www.bilibili.com/video/BV17s411A7dp/',
                 duration: '06:30',
                 desc: '符文法师守护世界的千年旅程'
             }
@@ -161,12 +176,20 @@ const CHAMPION_VIDEOS = {
         name: '盖伦',
         videos: [
             {
-                title: '德玛西亚 光明不能照亮一切',
+                title: '德玛西亚 荣耀之前 官方故事短片',
+                author: '英雄联盟宇宙',
+                platform: 'B站',
+                url: 'https://www.bilibili.com/video/BV1Ee41147nj/',
+                duration: '04:30',
+                desc: '德玛西亚王国的诞生与真相，盖伦的信仰'
+            },
+            {
+                title: '【英雄联盟】战士 2020赛季官方CG',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1Kt411Y7qZ/',
-                duration: '04:30',
-                desc: '德玛西亚王国的真相与盖伦的信仰'
+                url: 'https://www.bilibili.com/video/BV1mJ411G7ue/',
+                duration: '05:30',
+                desc: '盖伦、卡莎、厄加特等英雄登场的史诗CG'
             }
         ]
     },
@@ -174,12 +197,12 @@ const CHAMPION_VIDEOS = {
         name: '拉克丝',
         videos: [
             {
-                title: '拉克丝 光明不能照亮一切',
-                author: '英雄联盟',
+                title: '德玛西亚 荣耀之前 官方故事短片',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1Kt411Y7qZ/',
+                url: 'https://www.bilibili.com/video/BV1Ee41147nj/',
                 duration: '04:30',
-                desc: '生在禁魔国度的魔法师，她的秘密与挣扎'
+                desc: '生在禁魔国度的魔法师，拉克丝的秘密'
             }
         ]
     },
@@ -187,12 +210,12 @@ const CHAMPION_VIDEOS = {
         name: '塞拉斯',
         videos: [
             {
-                title: '塞拉斯 解脱者 官方故事动画',
-                author: '英雄联盟',
+                title: '德玛西亚 荣耀之前 官方故事短片',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1mJ411x7yG/',
-                duration: '05:00',
-                desc: '从阶下囚到革命者，塞拉斯的复仇之路'
+                url: 'https://www.bilibili.com/video/BV1Ee41147nj/',
+                duration: '04:30',
+                desc: '解脱者塞拉斯，德玛西亚禁魔制度的受害者'
             }
         ]
     },
@@ -200,12 +223,12 @@ const CHAMPION_VIDEOS = {
         name: '赵信',
         videos: [
             {
-                title: '赵信 德玛西亚的守护',
+                title: '【英雄联盟】战士 2020赛季官方CG',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://search.bilibili.com/all?keyword=赵信背景故事',
-                duration: '08:20',
-                desc: '从角斗士到皇家护卫的传奇人生'
+                url: 'https://www.bilibili.com/video/BV1mJ411G7ue/',
+                duration: '05:30',
+                desc: '德邦总管赵信登场，守护德玛西亚的荣耀'
             }
         ]
     },
@@ -213,25 +236,79 @@ const CHAMPION_VIDEOS = {
         name: '德莱厄斯',
         videos: [
             {
-                title: '德莱厄斯 诺克萨斯之手 官方CG',
+                title: '2025赛季诺克萨斯CG动画「齿痕」',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1Wx411Z7nL/',
-                duration: '04:00',
-                desc: '从孤儿到诺克萨斯大将军的铁血之路'
+                url: 'https://www.bilibili.com/video/BV1mHroYJEM8/',
+                duration: '10:21',
+                desc: '诺克萨斯之手德莱厄斯，帝国的铁血意志'
+            },
+            {
+                title: '德莱厄斯在战场上竟然因为一个新兵变成了战俘！！',
+                author: '英雄联盟JOJO',
+                platform: '微信视频号',
+                url: 'https://weixin.qq.com/sph/A6Um3w81AN',
+                desc: '诺克萨斯之手德莱厄斯的战场故事'
             }
         ]
     },
-    '锐雯': {
-        name: '锐雯',
+    '内瑟斯': {
+        name: '内瑟斯',
         videos: [
             {
-                title: '锐雯 断剑重铸 背景故事',
-                author: '英雄联盟',
-                platform: 'B站',
-                url: 'https://search.bilibili.com/all?keyword=锐雯背景故事',
-                duration: '10:15',
-                desc: '诺克萨斯战争英雄的觉醒与自我救赎'
+                title: '你只是怕了，内瑟斯！',
+                author: '英雄联盟JOJO',
+                platform: '微信视频号',
+                url: 'https://weixin.qq.com/sph/AtWzHsxRQ2',
+                desc: '沙漠死神内瑟斯的故事'
+            }
+        ]
+    },
+    '亚托克斯': {
+        name: '亚托克斯',
+        videos: [
+            {
+                title: '暗裔？',
+                author: '英雄联盟JOJO',
+                platform: '微信视频号',
+                url: 'https://weixin.qq.com/sph/AF2PzaS6cN',
+                desc: '暗裔剑魔亚托克斯的起源与传说'
+            }
+        ]
+    },
+    '安妮': {
+        name: '安妮',
+        videos: [
+            {
+                title: '第2集：提伯斯觉醒：失去一切的少女与熊熊怒火',
+                author: '英雄联盟JOJO',
+                platform: '微信视频号',
+                url: 'https://weixin.qq.com/sph/AlUl9jDzVC',
+                desc: '黑暗之女安妮与提伯斯的起源故事'
+            }
+        ]
+    },
+    '阿兹尔': {
+        name: '阿兹尔',
+        videos: [
+            {
+                title: '阿兹尔的无力，岩雀以万千岩刺破局',
+                author: '英雄联盟JOJO',
+                platform: '微信视频号',
+                url: 'https://weixin.qq.com/sph/A9c6LSYfor',
+                desc: '沙漠皇帝阿兹尔与岩雀的恕瑞玛故事'
+            }
+        ]
+    },
+    '塔莉垭': {
+        name: '塔莉垭',
+        videos: [
+            {
+                title: '阿兹尔的无力，岩雀以万千岩刺破局',
+                author: '英雄联盟JOJO',
+                platform: '微信视频号',
+                url: 'https://weixin.qq.com/sph/A9c6LSYfor',
+                desc: '岩雀塔莉垭以岩脉之力破局的故事'
             }
         ]
     },
@@ -239,12 +316,25 @@ const CHAMPION_VIDEOS = {
         name: '卡特琳娜',
         videos: [
             {
-                title: '卡特琳娜 刀锋之舞',
+                title: '2025赛季诺克萨斯CG动画「齿痕」',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://search.bilibili.com/all?keyword=卡特琳娜背景故事',
-                duration: '07:30',
-                desc: '诺克萨斯名门之女，致命的刺客'
+                url: 'https://www.bilibili.com/video/BV1mHroYJEM8/',
+                duration: '10:21',
+                desc: '诺克萨斯帝国故事，不祥之刃卡特琳娜'
+            }
+        ]
+    },
+    '锐雯': {
+        name: '锐雯',
+        videos: [
+            {
+                title: '德玛西亚 荣耀之前 官方故事短片',
+                author: '英雄联盟宇宙',
+                platform: 'B站',
+                url: 'https://www.bilibili.com/video/BV1Ee41147nj/',
+                duration: '04:30',
+                desc: '放逐之刃锐雯，诺克萨斯逃兵在德玛西亚'
             }
         ]
     },
@@ -252,12 +342,12 @@ const CHAMPION_VIDEOS = {
         name: '锤石',
         videos: [
             {
-                title: '锤石 暗影岛的折磨者',
-                author: '英雄联盟',
+                title: '英雄联盟宇宙：城邦传说 - 暗影岛',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://search.bilibili.com/all?keyword=锤石背景故事',
-                duration: '09:00',
-                desc: '从看守者到怨灵，锤石的堕落之路'
+                url: 'https://www.bilibili.com/video/BV1fz411b76p/',
+                duration: '05:00',
+                desc: '暗影岛的恐怖，魂锁典狱长锤石的故事'
             }
         ]
     },
@@ -265,12 +355,12 @@ const CHAMPION_VIDEOS = {
         name: '卢锡安',
         videos: [
             {
-                title: '卢锡安与塞纳 光明与暗影',
-                author: '英雄联盟',
+                title: '英雄联盟宇宙：城邦传说 - 暗影岛',
+                author: '英雄联盟宇宙',
                 platform: 'B站',
-                url: 'https://search.bilibili.com/all?keyword=卢锡安背景故事',
-                duration: '12:00',
-                desc: '失去爱人后的复仇与重逢'
+                url: 'https://www.bilibili.com/video/BV1fz411b76p/',
+                duration: '05:00',
+                desc: '圣枪游侠卢锡安与塞纳的爱情故事'
             }
         ]
     },
@@ -278,12 +368,19 @@ const CHAMPION_VIDEOS = {
         name: '佛耶戈',
         videos: [
             {
-                title: '佛耶戈 破败之王 官方CG动画',
+                title: '【英雄联盟】新赛季宣传片：破败之咒',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://www.bilibili.com/video/BV1v54y1s7tP/',
+                url: 'https://www.bilibili.com/video/BV1xX4y1M7eQ/',
                 duration: '04:30',
-                desc: '一个国王的疯狂爱情，导致了整个世界的灾难'
+                desc: '破败之王佛耶戈登场，2021赛季官方CG'
+            },
+            {
+                title: '卡玛维亚宿命：少年佛耶戈被迫加冕，王座试炼揭开悲剧序章',
+                author: '英雄联盟JOJO',
+                platform: '微信视频号',
+                url: 'https://weixin.qq.com/sph/A8gA52OBF1',
+                desc: '讲述佛耶戈从少年国王到破败之王的悲剧起源'
             }
         ]
     },
@@ -291,12 +388,38 @@ const CHAMPION_VIDEOS = {
         name: '佐伊',
         videos: [
             {
-                title: '佐伊 暮光星灵 背景故事',
+                title: '英雄联盟宇宙：城邦传说 - 巨神峰',
+                author: '英雄联盟宇宙',
+                platform: 'B站',
+                url: 'https://www.bilibili.com/video/BV13h411d7dz/',
+                duration: '06:00',
+                desc: '巨神峰的星灵故事，暮光星灵佐伊'
+            }
+        ]
+    },
+    '潘森': {
+        name: '潘森',
+        videos: [
+            {
+                title: '英雄联盟宇宙：城邦传说 - 巨神峰',
+                author: '英雄联盟宇宙',
+                platform: 'B站',
+                url: 'https://www.bilibili.com/video/BV13h411d7dz/',
+                duration: '06:00',
+                desc: '不屈之枪潘森，凡人对抗星灵的传奇'
+            }
+        ]
+    },
+    '卡莎': {
+        name: '卡莎',
+        videos: [
+            {
+                title: '【英雄联盟】战士 2020赛季官方CG',
                 author: '英雄联盟',
                 platform: 'B站',
-                url: 'https://search.bilibili.com/all?keyword=佐伊背景故事',
-                duration: '06:45',
-                desc: '被星灵选中的顽童，穿梭于维度之间'
+                url: 'https://www.bilibili.com/video/BV1mJ411G7ue/',
+                duration: '05:30',
+                desc: '虚空之女卡莎，在虚空中幸存的猎人'
             }
         ]
     }
